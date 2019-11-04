@@ -47,7 +47,15 @@ class TileGrid():
         self.h = h
         self.grid = [[TILE_EMPTY for c in range(w)] for r in range(h)]
 
-    def add_tile(self, r, c):
+    def add_tile(self, r, c, restrict_to_neighbors=True):
+        """Add tile to grid
+
+        restrict_to_neighbors - only allow road to be placed next to an
+                                existing tile
+        """
+        if restrict_to_neighbors and not any(self.get_neighbors(r, c)):
+            return
+
         self.grid[r][c] = self.evaluate_tile_type(r, c, modified=True)
 
         # re-evaluate tile types of adjacent grids

@@ -2,7 +2,7 @@ import pygame
 
 from . import grid
 
-# A lot of assumptions are made using these -- for now, do not modify
+# WARNING: for now, do not modify - tile polygons will not scale to dimensions
 TILE_WIDTH = 30
 TILE_HEIGHT = 30
 
