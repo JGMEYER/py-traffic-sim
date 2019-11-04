@@ -1,25 +1,33 @@
 import pygame
 import sys
 
+from road import grid as road_grid  # TODO fix imports / names
+from road import graphics as road_graphics  # TODO fix imports / names
+
+GRID_WIDTH = 30
+GRID_HEIGHT = 25
+
 # Create width and height constants
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = road_graphics.TILE_WIDTH * GRID_WIDTH
+WINDOW_HEIGHT = road_graphics.TILE_HEIGHT * GRID_HEIGHT
 
 
 def init():
+    """Initialize game window"""
     # Initialise all the pygame modules
     pygame.init()
     # Create a game window
     game_window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     # Set title
     pygame.display.set_caption("Traffic Simulator")
-
     return game_window
 
 
 def game_loop(game_window):
-    """ Game Loop """
+    """Game loop"""
     game_running = True
+
+    grid = road_grid.random_grid(GRID_WIDTH, GRID_HEIGHT)
 
     while game_running:
         # Loop through all active events
@@ -31,14 +39,15 @@ def game_loop(game_window):
         # Content here
         game_window.fill((255, 255, 255))
 
-        filled_rect = pygame.Rect(100, 100, 30, 30)
-        pygame.draw.rect(game_window, (0, 0, 0), filled_rect)
+        # Render random road
+        road_graphics.render_grid(game_window, grid)
 
         # Update our display
         pygame.display.update()
 
 
 def exit():
+    """Exit game"""
     # Uninitialize all pygame modules and quit the program
     pygame.quit()
     sys.exit()
