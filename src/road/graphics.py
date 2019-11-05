@@ -4,11 +4,9 @@ import pygame
 
 from .constants import TileType
 
-# WARNING: for now, do not modify - tile polygons will not scale to dimensions
 TILE_WIDTH = 64
 TILE_HEIGHT = 64
 ROAD_WIDTH = 30
-
 # Constraints
 assert TILE_WIDTH % 2 == 0
 assert TILE_HEIGHT % 2 == 0
