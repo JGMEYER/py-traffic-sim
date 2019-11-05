@@ -2,15 +2,7 @@ from typing import Tuple
 
 import pygame
 
-from .constants import TileType
-
-TILE_WIDTH = 64
-TILE_HEIGHT = 64
-ROAD_WIDTH = 30
-# Constraints
-assert TILE_WIDTH % 2 == 0
-assert TILE_HEIGHT % 2 == 0
-assert ROAD_WIDTH % 2 == 0
+from .constants import TILE_WIDTH, TILE_HEIGHT, ROAD_WIDTH, TileType
 
 
 def render_road_network(window, network, include_travel_paths=True):

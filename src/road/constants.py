@@ -1,5 +1,17 @@
 from enum import IntEnum
 
+###################
+# Tile properties #
+###################
+
+TILE_WIDTH = 64
+TILE_HEIGHT = 64
+ROAD_WIDTH = 30
+# Constraints
+assert TILE_WIDTH % 2 == 0
+assert TILE_HEIGHT % 2 == 0
+assert ROAD_WIDTH % 2 == 0
+
 
 class TileType(IntEnum):
     """Tile patterns and their orientations"""
