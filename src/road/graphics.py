@@ -13,6 +13,16 @@ assert TILE_HEIGHT % 2 == 0
 assert ROAD_WIDTH % 2 == 0
 
 
+def render_road_network(window, network, include_travel_paths=True):
+    render_grid(window, network.grid)
+    if include_travel_paths:
+        render_travel_paths(window, network.graph)
+
+
+#########
+# Tiles #
+#########
+
 def tile_poly(up=False, right=False, down=False, left=False):
     """Construct polygon based on road connections.
 
@@ -206,16 +216,6 @@ TILE_POLYS = {
     TileType.ALL: tile_poly(up=True, right=True, down=True, left=True)
 }
 
-
-def render_road_network(window, network, include_travel_paths=True):
-    render_grid(window, network.grid)
-    if include_travel_paths:
-        render_travel_paths(window, network.graph)
-
-
-#########
-# Tiles #
-#########
 
 def render_tile(window, r, c, road_type):
     """Draw single road tile to window"""
