@@ -4,6 +4,7 @@ import sys
 import input
 from road import grid as road_grid  # TODO fix imports / names
 from road import graphics as road_graphics  # TODO fix imports / names
+from road import network as road_network # TODO fix imports / names
 
 GRID_WIDTH = 30
 GRID_HEIGHT = 25
@@ -42,7 +43,7 @@ def game_loop(window):
     """Game loop"""
 
     # Create road network
-    network = road_grid.RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
+    network = road_network.RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
 
     while 1:
         # Process user and window inputs
