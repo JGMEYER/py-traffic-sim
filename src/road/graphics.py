@@ -206,7 +206,8 @@ TILE_POLYS = {
     TileType.UP_DOWN_LEFT: tile_poly(up=True, down=True, left=True),
     TileType.UP_RIGHT_LEFT: tile_poly(up=True, right=True, left=True),
     # four neighbors
-    TileType.ALL: tile_poly(up=True, right=True, down=True, left=True)
+    TileType.UP_RIGHT_DOWN_LEFT: tile_poly(up=True, right=True, down=True,
+                                           left=True)
 }
 
 
