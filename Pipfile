@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 pygame = "==2.0.0.dev4"
 networkx = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.7"

@@ -1,9 +1,12 @@
-import random
 from typing import List, Tuple
 
 import networkx as nx
 
-from .constants import TileType
+from .constants import (
+    TILE_WIDTH as tw,
+    TILE_HEIGHT as th,
+    TileType,
+)
 
 
 class TileGrid():
@@ -97,13 +100,21 @@ class TileGrid():
         return (up, right, down, left)
 
 
-def random_grid(w, h):
-    grid = TileGrid(w, h)
-    for r in range(h):
-        for c in range(w):
-            if random.random() < 0.5:
-                grid.add_tile(r, c)
-    return grid
+def grid_index_to_world_coords(r, c, center=False):
+    """Convert (row, col) index on the grid to (x, y) coordinate on the world
+    plane.
+    """
+    if center:
+        return (c*tw+tw//2, r*th+th//2)
+    else:
+        return (c*tw, r*th)
+
+
+def world_coords_to_grid_index(x, y):
+    """Convert (x, y) coordinate on the world plane to the corresponding
+    (row, col) index on the grid.
+    """
+    return (y//th, x//tw)
 
 
 class TravelGraph():
@@ -132,10 +143,3 @@ class TravelGraph():
     def shortest_path(self, source_pos, target_pos):
         """Get the shortest path from source tile to target tile"""
         return nx.shortest_path(self.G, source=source_pos, target=target_pos)
-
-
-if __name__ == "__main__":
-    """Tests"""
-    grid = random_grid()
-    print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                     for row in grid.grid]))

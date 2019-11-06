@@ -36,14 +36,16 @@ def exit():
 # Game Logic #
 ##############
 
-last_path = None
-
-
 def game_loop(window):
     """Game loop"""
 
     # Create road network
     network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
+
+    # DEMO
+    for i in range(10):
+        r, c = network.seed_pos
+        network.traffic.add_vehicle(r, c)
 
     while 1:
         # Process user and window inputs
@@ -56,15 +58,32 @@ def game_loop(window):
         # Render mouse grid cursor
         display_tile_cursor(window)
 
+        # Step road network one tick
+        network.step()
+
         # Render road network
         road_gfx.render_road_network(window, network)
 
-        # Render path to last placed tile
-        if last_path:
-            road_gfx.render_path(window, last_path)
+        # DEMO
+        randomize_vehicle_paths(window, network)
 
         # Update our display
         pygame.display.update()
+
+
+def randomize_vehicle_paths(window, network):
+    """DEMO: Send our single sim vehicle on errands"""
+    import random
+
+    # To seem more organic, only have sims travel to leaf nodes
+    G = network.graph.G
+    leaf_nodes = [x for x in G.nodes() if G.degree(x) == 1]
+
+    for v in network.traffic.vehicles:
+        if not v.path and leaf_nodes:
+            random_node = random.choice(leaf_nodes)
+            r, c = random_node
+            v.set_destination(network.graph, r, c)
 
 
 #########
@@ -85,16 +104,13 @@ def process_input(window, network):
 
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
-    r, c = input.mouse_coord_to_grid_coord(TILE_WIDTH, TILE_HEIGHT)
-    road_added = network.add_road((r, c))
-    if road_added:
-        global last_path
-        last_path = network.graph.shortest_path(network.seed_pos, (r, c))
+    r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
+    network.add_road((r, c))
 
 
 def display_tile_cursor(window):
     """Highlights tile underneath mouse"""
-    r, c = input.mouse_coord_to_grid_coord(TILE_WIDTH, TILE_HEIGHT)
+    r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
     x = c * TILE_WIDTH
     y = r * TILE_HEIGHT
     rect = pygame.Rect(x, y, TILE_WIDTH, TILE_HEIGHT)

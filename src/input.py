@@ -1,6 +1,8 @@
 import pygame
 
+from road import grid
 
-def mouse_coord_to_grid_coord(tile_width, tile_height):
+
+def mouse_coords_to_grid_index(tile_width, tile_height):
     x, y = pygame.mouse.get_pos()
-    return (y // tile_height, x // tile_width)  # (row, column)
+    return grid.world_coords_to_grid_index(x, y)

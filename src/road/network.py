@@ -1,5 +1,6 @@
 from .constants import TileType
 from .grid import TileGrid, TravelGraph
+from .traffic import Traffic
 
 
 class RoadNetwork():
@@ -10,8 +11,11 @@ class RoadNetwork():
     def __init__(self, w, h):
         self.w = w
         self.h = h
+
+        # Network components
         self.grid = TileGrid(w, h)
         self.graph = TravelGraph()
+        self.traffic = Traffic()
 
         # Create starting road from which all other roads will connect
         self.seed_pos = (h//2, w//2)
@@ -39,3 +43,7 @@ class RoadNetwork():
         if c-1 >= 0 and grid[r][c-1] != TileType.EMPTY:
             n_pos.append((r, c-1))
         return n_pos
+
+    def step(self):
+        """Step the network one tick"""
+        self.traffic.step()
