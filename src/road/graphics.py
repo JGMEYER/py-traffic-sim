@@ -2,13 +2,19 @@ from typing import Tuple
 
 import pygame
 
-from .constants import TILE_WIDTH, TILE_HEIGHT, ROAD_WIDTH, TileType
+from .constants import (
+    TILE_WIDTH as tw,
+    TILE_HEIGHT as th,
+    ROAD_WIDTH as rw,
+    TileType,
+)
 
 
 def render_road_network(window, network, include_travel_paths=True):
     render_grid(window, network.grid)
     if include_travel_paths:
         render_travel_paths(window, network.graph)
+    render_traffic(window, network.traffic)
 
 
 #########
@@ -138,11 +144,6 @@ def tile_poly(up=False, right=False, down=False, left=False):
     """
     points = []
 
-    # Shorten variable names
-    tw = TILE_WIDTH
-    th = TILE_HEIGHT
-    rw = ROAD_WIDTH
-
     if up:
         points.extend(
             [(tw//2-(rw//2-1), 0),
@@ -214,7 +215,7 @@ def render_tile(window, r, c, road_type):
     points = TILE_POLYS[road_type]
     if not points:
         return
-    translated_points = [(x + TILE_WIDTH * c, y + TILE_HEIGHT * r)
+    translated_points = [(x + tw * c, y + th * r)
                          for (x, y) in points]
     pygame.draw.polygon(window, (0, 0, 0), translated_points)
 
@@ -233,7 +234,7 @@ def render_grid(window, grid):
 def tile_pos_to_pixel_center(pos: Tuple[int, int]):
     """Converts a tile position to the center pixel position for that tile"""
     r, c = pos
-    return (c*TILE_WIDTH + TILE_WIDTH//2, r*TILE_HEIGHT + TILE_HEIGHT//2)
+    return (c*tw + tw//2, r*th + th//2)
 
 
 def render_node(window, pos: Tuple[int, int], color):
@@ -268,3 +269,19 @@ def render_path(window, path):
     for idx in range(len(path)-1):
         edge = (path[idx], path[idx+1])
         render_edge(window, edge, color, width=10)
+
+
+############
+# Vehicles #
+############
+
+def render_vehicle(window, vcl):
+    """Render vehicle"""
+    x, y = vcl.world_coords
+    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=8)
+
+
+def render_traffic(window, traffic):
+    """Render all vehicles"""
+    for v in traffic.vehicles:
+        render_vehicle(window, v)
