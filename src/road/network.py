@@ -27,7 +27,7 @@ class RoadNetwork():
         r, c = pos
         tile_added = self.grid.add_tile(r, c, restrict_to_neighbors)
         if tile_added:
-            nbrs = self.get_neighbors(self.grid, r, c)
+            nbrs = self.grid.get_neighbors(r, c)
             self.graph.register_tile_intersection(r, c,
                                                   self.grid.tile_type(r, c),
                                                   nbrs)

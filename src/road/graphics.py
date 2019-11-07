@@ -12,8 +12,8 @@ from .constants import (
 
 def render_road_network(window, network, include_travel_paths=True):
     render_grid(window, network.grid)
-    if include_travel_paths:
-        render_travel_paths(window, network.graph)
+    # if include_travel_paths:
+    #     render_travel_paths(window, network.graph)
     render_traffic(window, network.traffic)
 
 
