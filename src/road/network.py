@@ -1,6 +1,3 @@
-from typing import Dict, Tuple
-
-from .constants import Direction, TileType
 from .grid import TileGrid, TravelGraph
 from .traffic import Traffic
 
@@ -30,30 +27,58 @@ class RoadNetwork():
         r, c = pos
         tile_added = self.grid.add_tile(r, c, restrict_to_neighbors)
         if tile_added:
-            nbrs = self.get_neighbor_positions(self.grid, r, c)
+            nbrs = self.get_neighbors(self.grid, r, c)
             self.graph.register_tile_intersection(r, c,
                                                   self.grid.tile_type(r, c),
                                                   nbrs)
             return True
         return False
 
-    def get_neighbors(self, grid, r, c):
-        """Get tile neighbors adjacent to specified tile index """
-        nbrs: Dict[Direction, Tuple[Tuple[int, int], TileType]] = {}
-
-        if r-1 >= 0 and grid.tile_type(r-1, c) != TileType.EMPTY:
-            nbrs[Direction.UP] = ((r-1, c), grid.tile_type(r-1, c))
-
-        if c+1 < self.w and grid.tile_type(r, c+1) != TileType.EMPTY:
-            nbrs[Direction.RIGHT] = ((r, c+1), grid.tile_type(r, c+1))
-
-        if r+1 < self.h and grid.tile_type(r+1, c) != TileType.EMPTY:
-            nbrs[Direction.DOWN] = ((r+1, c), grid.tile_type(r+1, c))
-
-        if c-1 >= 0 and grid.tile_type(r, c-1) != TileType.EMPTY:
-            nbrs[Direction.LEFT] = ((r, c-1), grid.tile_type(r, c-1))
-
-        return nbrs
+    # TODO rm?
+    # def get_neighborhood(self, r, c):
+    #     """
+    #     Returns a dict of neighbors (primary) for the given tile index and all
+    #     of their neighbors' neighbors (secondary).
+    #
+    #     Spread, visualized:
+    #
+    #         ┌───┬───┬───┬───┬───┐
+    #         │   │   │ * │   │   │
+    #         ├───┼───┼───┼───┼───┤
+    #         │   │ * │ n1│ * │   │
+    #         ├───┼───┼───┼───┼───┤
+    #         │ * │ n4│ o │ n2│ * │
+    #         ├───┼───┼───┼───┼───┤
+    #         │   │ * │ n3│ * │   │
+    #         ├───┼───┼───┼───┼───┤
+    #         │   │   │ * │   │   │
+    #         └───┴───┴───┴───┴───┘
+    #
+    #         o = origin index
+    #         n = primary neighbor
+    #         * = secondary neighbor
+    #
+    #     The final dictionary keys on all 'o' and 'n' tile indexes and contains
+    #     all neighbors adjacent to each of the key tile indexes.
+    #
+    #     Returns:
+    #         nbrhood = {
+    #             (r_o, c_o): {
+    #                 Direction.UP: ((r1, c1), TileType),
+    #                 Direction.DOWN: ((r2, c2), TileType),
+    #                 Direction.LEFT: ((r3, c3), TileType),
+    #                 Direction.RIGHT: ((r4, c4), TileType),
+    #             },
+    #             (r_n1, r_n1): { .. },
+    #             (r_n2, r_n2): { .. },
+    #             (r_n3, r_n3): { .. },
+    #             (r_n4, r_n4): { .. },
+    #         }
+    #     """
+    #     nbrhood = {}
+    #     nbrs = self.grid.get_neighbors(r, c)
+    #
+    #     for n in nbrs:
 
     def step(self):
         """Step the network one tick"""

@@ -62,9 +62,13 @@ class TileGrid():
         if not modified and self.grid[r][c] == TileType.EMPTY:
             return TileType.EMPTY
 
-        neighbors = self.get_neighbors(r, c)
-        count = len([n for n in neighbors if n])
-        up, right, down, left = neighbors
+        nbrs = self.get_neighbors(r, c)
+
+        count = len(nbrs.keys())
+        up = nbrs.get(Direction.UP)
+        right = nbrs.get(Direction.RIGHT)
+        down = nbrs.get(Direction.DOWN)
+        left = nbrs.get(Direction.LEFT)
 
         if count == 0:
             return TileType.ALONE
@@ -103,12 +107,22 @@ class TileGrid():
             return TileType.UP_RIGHT_DOWN_LEFT
 
     def get_neighbors(self, r, c):
-        """Get tuple of bools for occupied tiles adjacent to tile coordinate"""
-        up = (r-1 >= 0 and self.grid[r-1][c] != TileType.EMPTY)
-        right = (c+1 < self.w and self.grid[r][c+1] != TileType.EMPTY)
-        down = (r+1 < self.h and self.grid[r+1][c] != TileType.EMPTY)
-        left = (c-1 >= 0 and self.grid[r][c-1] != TileType.EMPTY)
-        return (up, right, down, left)
+        """Get tile neighbors adjacent to specified tile index """
+        nbrs: Dict[Direction, Tuple[Tuple[int, int], TileType]] = {}
+
+        if r-1 >= 0 and self.tile_type(r-1, c) != TileType.EMPTY:
+            nbrs[Direction.UP] = ((r-1, c), self.tile_type(r-1, c))
+
+        if c+1 < self.w and self.tile_type(r, c+1) != TileType.EMPTY:
+            nbrs[Direction.RIGHT] = ((r, c+1), self.tile_type(r, c+1))
+
+        if r+1 < self.h and self.tile_type(r+1, c) != TileType.EMPTY:
+            nbrs[Direction.DOWN] = ((r+1, c), self.tile_type(r+1, c))
+
+        if c-1 >= 0 and self.tile_type(r, c-1) != TileType.EMPTY:
+            nbrs[Direction.LEFT] = ((r, c-1), self.tile_type(r, c-1))
+
+        return nbrs
 
 
 def grid_index_to_world_coords(r, c, center=False):
@@ -162,10 +176,22 @@ class TravelIntersection():
     """
 
     def __init__(self, r, c, tile_type):
+        self.r = r
+        self.c = c
         self.nodes = {}
         for dir in tile_type.segment_directions():
-            self.nodes[dir] = RoadSegmentNode((r, c), dir, RoadNodeType.ENTER)
-            self.nodes[dir] = RoadSegmentNode((r, c), dir, RoadNodeType.EXIT)
+            self.add_segment_nodes()
+
+    def segments(self):
+        """Return road segments associated with tile"""
+        return self.node.keys()
+
+    def add_segment_nodes(self, dir: Direction):
+        """Add all ENTER and EXIT nodes for a specified tile road segment"""
+        self.nodes[dir] = RoadSegmentNode((self.r, self.c), dir,
+                                          RoadNodeType.ENTER)
+        self.nodes[dir] = RoadSegmentNode((self.r, self.c), dir,
+                                          RoadNodeType.EXIT)
 
     def enter_nodes(self):
         """Return all ENTER nodes in the intersection"""
@@ -177,53 +203,103 @@ class TravelIntersection():
         return [self.nodes[dir][RoadSegmentNode.EXIT]
                 for dir in self.nodes.keys()]
 
+    def get_nodes_for_segment(self, dir):
+        """Return (ENTER, EXIT) nodes tuple for segment"""
+        return (self.nodes[dir][RoadNodeType.ENTER],
+                self.nodes[dir][RoadNodeType.EXIT])
 
-# TODO update class docstring
+
 # TODO add docstrings
 class TravelGraph():
     """A graph of all intersection nodes
 
-    Note: the current implementation treats every road tile as a node in the
-    graph and thus is very unoptimized. Future iterations should only include
-    road intersections as nodes in the graph.
+    Note: the current implementation adds nodes to every road tile in the graph
+    and thus is very unoptimized. Future iterations should only include road
+    intersections, i.e. no straightaways, like UP_DOWN and RIGHT_LEFT tiles.
     """
 
     def __init__(self):
         self.G = nx.DiGraph()
         self.intersections: Dict[Tuple[int, int], TravelIntersection] = {}
 
-    def register_tile_intersection(self, r, c, tile_type,
+    def register_tile_intersection(self, grid, r, c, tile_type,
                                    nbrs: Dict[Direction, Tuple[Tuple[int, int],
                                                                TileType]]):
-        intrsct = Intersection(r, c, tile_type)
+        """Add new intersection to TravelGraph"""
+        # Create and intraconnect nodes for new intersection
+        insct = TravelIntersection(r, c, tile_type)
+        self._intraconnect_nodes(insct)
 
-        # TODO connect all nodes in segments as appropriate (stright, right, left turns)
-        # TODO recreate all neighbor intersections (nodes) and add edges to all
-        #      their neighbors. this should effectively add the center node
-        #      to the grid
+        # Neighbor intersections will have a new segment added to their tile to
+        # bridge the connection to the newly placed tile. Add ENTER and EXIT
+        # nodes to all neighbor's new segments and recompute their
+        # intraconnected edges to account for this update.
+        for dir, ((n_r, n_c), tile_type) in nbrs.items():
+            n_insct = self.intersections[(n_r, n_c)]
+            # Add nodes to new segment
+            n_insct.add_segment_nodes(dir.opposite())
+            # Update edges
+            self._update_intersection_intraconnected_edges(n_r, n_c)
 
-        self.intersections[(r, c)] = intersct
+        # Add edges between intersection and neighbor intersections
+        for dir, ((n_r, n_c), tile_type) in nbrs.items():
+            n_insct = self.intersections[(n_r, n_c)]
+            enter, exit = insct.get_nodes_for_segment(dir)
+            n_enter, n_exit = n_insct.get_nodes_for_segment(dir.opposite())
+            self.G.add_edge((exit, n_enter))
+            self.G.add_edge((n_exit, enter))
 
-    def _connect_nodes_in_intersection():
-        # TODO rename
-        # TODO connect all nodes in segments as appropriate (stright, right, left turns)
-        pass
+        self.intersections[(r, c)] = insct
+
+    def _update_intersection_intraconnected_edges(self, insct):
+        """Update existing intersection's edges to match desired configuration
+        for current set of nodes.
+
+        Should only be used on existing intersections in the graph that have
+        been updated via a road adjacent to it, i.e. do not run this for newly
+        placed dead-end tiles.
+        """
+        # Clear all self-connected edges from existing dead-end segments
+        # We don't know which one was newly added, so go through each segment
+        # and try removing any self-connections.
+        for dir in insct.segments():
+            enter, exit = insct.get_nodes_for_segment(dir)
+            try:
+                self.G.remove_edge((enter, exit))
+            except nx.NetworkXError:
+                # No edge between enter and exit
+                pass
+
+        self._intraconnect_nodes(insct)
+
+    def _intraconnect_nodes(self, insct):
+        """Connect all ENTER and EXIT nodes within segments in an
+        intersection.
+        """
+        # Only one segment. Connect the two nodes, so vehicles can make a
+        # U-Turn at dead-ends.
+        if len(insct.segments()) == 1:
+            enter_node, exit_node = \
+                insct.get_nodes_for_segment(insct.segments()[0])
+            self.G.add_edge(enter_node, exit_node)
+
+        # Connect segments' ENTER nodes to other segments' EXIT nodes
+        # This is overkill when we're updating an intersection since most edges
+        # already exist, but since this likely only happens on a player action
+        # and not in the game loop we're ok with the efficiency hit.
+        else:
+            for enter_node in insct.enter_nodes():
+                for exit_node in insct.exit_nodes():
+                    # Don't connect any segments to themselves
+                    if exit_node.dir == enter_node.dir:
+                        continue
+                    # Add the edge, even if it already exists
+                    self.G.add_edge(enter_node, exit_node)
 
     def shortest_path(self, r_a, c_a, r_b, c_b):
+        """Get the shortest path from source tile to target tile"""
+        # TODO implement -- could be tricky since a Vehicle will no longer map
+        # to just a singular node on a tile, we need to figure out which lane
+        # they're in
+        # nx.shortest_path(self.G, source=source_node, target=target_node)
         pass
-
-    # def add_node(self, pos, n_pos: List[Tuple[int, int]]):
-    #     """Add node to the graph
-    #
-    #     r - road tile row
-    #     c - road tile column
-    #     n_pos - neighbor positions of provided road tile position
-    #     """
-    #     self.G.add_node(pos)
-    #     for n in n_pos:
-    #         # Add two-way edge
-    #         self.G.add_edge(pos, n, length=1)
-
-    # def shortest_path(self, source_pos, target_pos):
-    #     """Get the shortest path from source tile to target tile"""
-    #     return nx.shortest_path(self.G, source=source_pos, target=target_pos)

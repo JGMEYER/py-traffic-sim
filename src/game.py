@@ -42,10 +42,10 @@ def game_loop(window):
     # Create road network
     network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
 
-    # DEMO
-    for i in range(10):
-        r, c = network.seed_pos
-        network.traffic.add_vehicle(r, c)
+    # # DEMO
+    # for i in range(10):
+    #     r, c = network.seed_pos
+    #     network.traffic.add_vehicle(r, c)
 
     while 1:
         # Process user and window inputs
