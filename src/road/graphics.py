@@ -8,12 +8,16 @@ from .constants import (
     ROAD_WIDTH as rw,
     TileType,
 )
+from .grid import (
+    RoadSegmentNode,
+    road_segment_node_to_world_coords,
+)
 
 
 def render_road_network(window, network, include_travel_paths=True):
     render_grid(window, network.grid)
-    # if include_travel_paths:
-    #     render_travel_paths(window, network.graph)
+    if include_travel_paths:
+        render_travel_paths(window, network.graph)
     render_traffic(window, network.traffic)
 
 
@@ -232,23 +236,20 @@ def render_grid(window, grid):
 # Road Graph #
 ##############
 
-def tile_pos_to_pixel_center(pos: Tuple[int, int]):
-    """Converts a tile position to the center pixel position for that tile"""
-    r, c = pos
-    return (c*tw + tw//2, r*th + th//2)
-
-
-def render_node(window, pos: Tuple[int, int], color):
-    center = tile_pos_to_pixel_center(pos)
+def render_node(window, node, color):
+    #TODO docstring
+    #TODO change color based on enter/exit
+    center = road_segment_node_to_world_coords(node)
     pygame.draw.circle(window, color, center, radius=3)
 
 
-def render_edge(window, edge: Tuple[Tuple[int, int], Tuple[int, int]], color,
+def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
                 width=1):
-    a, b = edge
-    center_a = tile_pos_to_pixel_center(a)
-    center_b = tile_pos_to_pixel_center(b)
-    pygame.draw.line(window, color, center_a, center_b, width=width)
+    #TODO docstring
+    node_u, node_v = edge
+    center_u = road_segment_node_to_world_coords(node_u)
+    center_v = road_segment_node_to_world_coords(node_v)
+    pygame.draw.line(window, color, center_u, center_v, width=width)
 
 
 def render_travel_paths(window, graph):
@@ -269,7 +270,7 @@ def render_path(window, path):
         return
     for idx in range(len(path)-1):
         edge = (path[idx], path[idx+1])
-        render_edge(window, edge, color, width=10)
+        render_edge(window, edge, color, width=2)
 
 
 ############
@@ -279,7 +280,7 @@ def render_path(window, path):
 def render_vehicle(window, vcl):
     """Render vehicle"""
     x, y = vcl.world_coords
-    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=8)
+    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=4)
 
 
 def render_traffic(window, traffic):

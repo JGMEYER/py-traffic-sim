@@ -42,11 +42,6 @@ def game_loop(window):
     # Create road network
     network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
 
-    # # DEMO
-    # for i in range(10):
-    #     r, c = network.seed_pos
-    #     network.traffic.add_vehicle(r, c)
-
     while 1:
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
@@ -72,18 +67,17 @@ def game_loop(window):
 
 
 def randomize_vehicle_paths(window, network):
-    """DEMO: Send our single sim vehicle on errands"""
+    # DEMO
+    # Send our sim vehicles on random errands
     import random
-
-    # To seem more organic, only have sims travel to leaf nodes
-    G = network.graph.G
-    leaf_nodes = [x for x in G.nodes() if G.degree(x) == 1]
-
+    if not list(network.graph.G.nodes):
+        return
     for v in network.traffic.vehicles:
-        if not v.path and leaf_nodes:
-            random_node = random.choice(leaf_nodes)
-            r, c = random_node
-            v.set_destination(network.graph, r, c)
+        if not v.path:
+            random_node = random.choice(list(network.graph.G.nodes))
+            path = network.graph.shortest_path(v.last_node, random_node)
+            v.set_path(path)
+        road_gfx.render_path(window, v.path)
 
 
 #########
@@ -105,7 +99,13 @@ def process_input(window, network):
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
     r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
-    network.add_road((r, c))
+    road_added = network.add_road((r, c))
+
+    # DEMO
+    import random
+    if road_added and random.random() < 0.3:
+        node = random.choice(list(network.graph.G.nodes))
+        network.traffic.add_vehicle(node)
 
 
 def display_tile_cursor(window):

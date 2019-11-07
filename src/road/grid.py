@@ -6,6 +6,7 @@ import networkx as nx
 from .constants import (
     TILE_WIDTH as tw,
     TILE_HEIGHT as th,
+    ROAD_WIDTH as rw,
     Direction,
     RoadNodeType,
     TileType,
@@ -150,12 +151,48 @@ def world_coords_to_grid_index(x, y):
 class RoadSegmentNode():
     """An ENTER or EXIT travel node on a road segment.
 
-    A road segment is any "active" road on a particular tile, e.g. an
+    A road "segment" is any active road on a particular tile, e.g. an
     UP_DOWN_LEFT tile has an UP, DOWN, and LEFT segment.
     """
-    pos: Tuple[int, int]
+    tile_index: Tuple[int, int]  # (r, c)
     dir: Direction
     node_type: RoadNodeType
+
+
+def road_segment_node_to_world_coords(node: RoadSegmentNode):
+    """Convert location of `RoadSegmentNode` on tile to world coordinates."""
+    r, c = node.tile_index
+    x, y = grid_index_to_world_coords(r, c, center=True)
+
+    if node.dir == Direction.UP:
+        y -= th//4
+        if node.node_type == RoadNodeType.ENTER:
+            x -= rw//2//2
+        elif node.node_type == RoadNodeType.EXIT:
+            x += rw//2//2
+
+    elif node.dir == Direction.RIGHT:
+        x += tw//4
+        if node.node_type == RoadNodeType.ENTER:
+            y -= rw//2//2
+        elif node.node_type == RoadNodeType.EXIT:
+            y += rw//2//2
+
+    elif node.dir == Direction.DOWN:
+        y += th//4
+        if node.node_type == RoadNodeType.ENTER:
+            x += rw//2//2
+        elif node.node_type == RoadNodeType.EXIT:
+            x -= rw//2//2
+
+    elif node.dir == Direction.LEFT:
+        x -= tw//4
+        if node.node_type == RoadNodeType.ENTER:
+            y += rw//2//2
+        elif node.node_type == RoadNodeType.EXIT:
+            y -= rw//2//2
+
+    return x, y
 
 
 class TravelIntersection():
@@ -212,7 +249,6 @@ class TravelIntersection():
                 self.nodes[dir][RoadNodeType.EXIT])
 
 
-# TODO add docstrings
 class TravelGraph():
     """A graph of all intersection nodes
 
@@ -302,10 +338,7 @@ class TravelGraph():
                     # Add the edge, even if it already exists
                     self.G.add_edge(enter, exit)
 
-    def shortest_path(self, r_a, c_a, r_b, c_b):
-        """Get the shortest path from source tile to target tile"""
-        # TODO implement -- could be tricky since a Vehicle will no longer map
-        # to just a singular node on a tile, we need to figure out which lane
-        # they're in
+    def shortest_path(self, source_node, target_node):
+        """Get the shortest path from source node to target node"""
         # nx.shortest_path(self.G, source=source_node, target=target_node)
-        pass
+        return nx.shortest_path(self.G, source=source_node, target=target_node)
