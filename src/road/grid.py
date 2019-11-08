@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Tuple
 
 import networkx as nx
@@ -157,42 +157,44 @@ class RoadSegmentNode():
     tile_index: Tuple[int, int]  # (r, c)
     dir: Direction
     node_type: RoadNodeType
+    world_coords: Tuple[int, int] = field(init=False)
 
+    def __post_init__(self):
+        """Get location of `RoadSegmentNode` on world plane."""
+        r, c = self.tile_index
+        x, y = grid_index_to_world_coords(r, c, center=True)
 
-def road_segment_node_to_world_coords(node: RoadSegmentNode):
-    """Convert location of `RoadSegmentNode` on tile to world coordinates."""
-    r, c = node.tile_index
-    x, y = grid_index_to_world_coords(r, c, center=True)
+        if self.dir == Direction.UP:
+            y -= th//4
+            if self.node_type == RoadNodeType.ENTER:
+                x -= rw//2//2
+            elif self.node_type == RoadNodeType.EXIT:
+                x += rw//2//2
 
-    if node.dir == Direction.UP:
-        y -= th//4
-        if node.node_type == RoadNodeType.ENTER:
-            x -= rw//2//2
-        elif node.node_type == RoadNodeType.EXIT:
-            x += rw//2//2
+        elif self.dir == Direction.RIGHT:
+            x += tw//4
+            if self.node_type == RoadNodeType.ENTER:
+                y -= rw//2//2
+            elif self.node_type == RoadNodeType.EXIT:
+                y += rw//2//2
 
-    elif node.dir == Direction.RIGHT:
-        x += tw//4
-        if node.node_type == RoadNodeType.ENTER:
-            y -= rw//2//2
-        elif node.node_type == RoadNodeType.EXIT:
-            y += rw//2//2
+        elif self.dir == Direction.DOWN:
+            y += th//4
+            if self.node_type == RoadNodeType.ENTER:
+                x += rw//2//2
+            elif self.node_type == RoadNodeType.EXIT:
+                x -= rw//2//2
 
-    elif node.dir == Direction.DOWN:
-        y += th//4
-        if node.node_type == RoadNodeType.ENTER:
-            x += rw//2//2
-        elif node.node_type == RoadNodeType.EXIT:
-            x -= rw//2//2
+        elif self.dir == Direction.LEFT:
+            x -= tw//4
+            if self.node_type == RoadNodeType.ENTER:
+                y += rw//2//2
+            elif self.node_type == RoadNodeType.EXIT:
+                y -= rw//2//2
 
-    elif node.dir == Direction.LEFT:
-        x -= tw//4
-        if node.node_type == RoadNodeType.ENTER:
-            y += rw//2//2
-        elif node.node_type == RoadNodeType.EXIT:
-            y -= rw//2//2
-
-    return x, y
+        # Hack to get around frozen=True. We don't care that we're mutating
+        # an "immutable" object on __init__().
+        object.__setattr__(self, 'world_coords', (x, y))
 
 
 class TravelIntersection():

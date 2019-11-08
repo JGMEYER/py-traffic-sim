@@ -9,10 +9,7 @@ from .constants import (
     RoadNodeType,
     TileType,
 )
-from .grid import (
-    RoadSegmentNode,
-    road_segment_node_to_world_coords,
-)
+from .grid import RoadSegmentNode
 
 
 def render_road_network(window, network, edges=True, nodes=True):
@@ -244,7 +241,7 @@ def render_node(window, node: RoadSegmentNode):
     elif node.node_type == RoadNodeType.EXIT:
         color = (255, 100, 100)
 
-    center = road_segment_node_to_world_coords(node)
+    center = node.world_coords
     pygame.draw.circle(window, color, center, radius=3)
 
 
@@ -252,8 +249,8 @@ def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
                 width=1):
     """Render TravelGraph edge"""
     node_u, node_v = edge
-    center_u = road_segment_node_to_world_coords(node_u)
-    center_v = road_segment_node_to_world_coords(node_v)
+    center_u = node_u.world_coords
+    center_v = node_v.world_coords
     pygame.draw.line(window, color, center_u, center_v, width=width)
 
 

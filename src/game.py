@@ -42,6 +42,23 @@ def game_loop(window):
     # Create road network
     network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
 
+    # DEMO
+    stress_test = False
+    if stress_test:
+        import random
+        network.add_road(0, 0, restrict_to_neighbors=False)
+        # Fill entire network grid
+        for r in range(network.h):
+            for c in range(network.w):
+                network.add_road(r, c, restrict_to_neighbors=True)
+        # Add a bunch of vehicles
+        for n in range(100):
+            node = random.choice(list(network.graph.G.nodes))
+            network.traffic.add_vehicle(node)
+    else:
+        network.add_road(network.h//2, network.w//2,
+                         restrict_to_neighbors=False)
+
     while 1:
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
@@ -99,7 +116,7 @@ def process_input(window, network):
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
     r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
-    road_added = network.add_road((r, c))
+    road_added = network.add_road(r, c)
 
     # DEMO
     import random

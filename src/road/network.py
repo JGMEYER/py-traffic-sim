@@ -16,15 +16,10 @@ class RoadNetwork():
         self.graph = TravelGraph()
         self.traffic = Traffic()
 
-        # Create starting road from which all other roads will connect
-        self.seed_pos = (h//2, w//2)
-        self.add_road(self.seed_pos, restrict_to_neighbors=False)
-
-    def add_road(self, pos, restrict_to_neighbors=True):
+    def add_road(self, r, c, restrict_to_neighbors=True):
         """Add road node to the network
 
         returns: road added (bool)"""
-        r, c = pos
         tile_added = self.grid.add_tile(r, c, restrict_to_neighbors)
         if tile_added:
             nbrs = self.grid.get_neighbors(r, c)

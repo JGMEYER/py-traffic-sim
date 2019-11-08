@@ -2,10 +2,7 @@ import numpy as np
 from typing import List
 
 from .constants import TILE_WIDTH as tw
-from .grid import (
-    road_segment_node_to_world_coords,
-    RoadSegmentNode,
-)
+from .grid import RoadSegmentNode
 
 
 class Traffic():
@@ -31,7 +28,7 @@ class Vehicle():
         # Attributes
         self.speed = 0.05 * tw  # WARNING: could have undesirable behavior
         # Location
-        self.world_coords = road_segment_node_to_world_coords(node)
+        self.world_coords = node.world_coords
         # Travel path
         self.path = [node]  # always keep 1 in path
         self.last_node = node
@@ -79,7 +76,7 @@ class Vehicle():
                 return
 
             t_node = self.path[0]
-            t_x, t_y = road_segment_node_to_world_coords(t_node)
+            t_x, t_y = t_node.world_coords
 
             # Attempt move towards target
             dist_moved = self.move_towards(t_x, t_y, remaining_move_dist)
