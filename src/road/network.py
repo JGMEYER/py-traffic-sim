@@ -34,52 +34,6 @@ class RoadNetwork():
             return True
         return False
 
-    # TODO rm?
-    # def get_neighborhood(self, r, c):
-    #     """
-    #     Returns a dict of neighbors (primary) for the given tile index and all
-    #     of their neighbors' neighbors (secondary).
-    #
-    #     Spread, visualized:
-    #
-    #         ┌───┬───┬───┬───┬───┐
-    #         │   │   │ * │   │   │
-    #         ├───┼───┼───┼───┼───┤
-    #         │   │ * │ n1│ * │   │
-    #         ├───┼───┼───┼───┼───┤
-    #         │ * │ n4│ o │ n2│ * │
-    #         ├───┼───┼───┼───┼───┤
-    #         │   │ * │ n3│ * │   │
-    #         ├───┼───┼───┼───┼───┤
-    #         │   │   │ * │   │   │
-    #         └───┴───┴───┴───┴───┘
-    #
-    #         o = origin index
-    #         n = primary neighbor
-    #         * = secondary neighbor
-    #
-    #     The final dictionary keys on all 'o' and 'n' tile indexes and contains
-    #     all neighbors adjacent to each of the key tile indexes.
-    #
-    #     Returns:
-    #         nbrhood = {
-    #             (r_o, c_o): {
-    #                 Direction.UP: ((r1, c1), TileType),
-    #                 Direction.DOWN: ((r2, c2), TileType),
-    #                 Direction.LEFT: ((r3, c3), TileType),
-    #                 Direction.RIGHT: ((r4, c4), TileType),
-    #             },
-    #             (r_n1, r_n1): { .. },
-    #             (r_n2, r_n2): { .. },
-    #             (r_n3, r_n3): { .. },
-    #             (r_n4, r_n4): { .. },
-    #         }
-    #     """
-    #     nbrhood = {}
-    #     nbrs = self.grid.get_neighbors(r, c)
-    #
-    #     for n in nbrs:
-
     def step(self):
         """Step the network one tick"""
         self.traffic.step()

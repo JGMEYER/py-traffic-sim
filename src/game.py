@@ -6,8 +6,8 @@ from road import graphics as road_gfx
 from road.constants import TILE_WIDTH, TILE_HEIGHT
 from road.network import RoadNetwork
 
-GRID_WIDTH = 30
-GRID_HEIGHT = 25
+GRID_WIDTH = 25
+GRID_HEIGHT = 15
 
 # Create width and height constants
 WINDOW_WIDTH = TILE_WIDTH * GRID_WIDTH
@@ -57,7 +57,7 @@ def game_loop(window):
         network.step()
 
         # Render road network
-        road_gfx.render_road_network(window, network)
+        road_gfx.render_road_network(window, network, edges=True, nodes=True)
 
         # DEMO
         randomize_vehicle_paths(window, network)

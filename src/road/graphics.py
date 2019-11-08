@@ -6,6 +6,7 @@ from .constants import (
     TILE_WIDTH as tw,
     TILE_HEIGHT as th,
     ROAD_WIDTH as rw,
+    RoadNodeType,
     TileType,
 )
 from .grid import (
@@ -14,10 +15,9 @@ from .grid import (
 )
 
 
-def render_road_network(window, network, include_travel_paths=True):
+def render_road_network(window, network, edges=True, nodes=True):
     render_grid(window, network.grid)
-    if include_travel_paths:
-        render_travel_paths(window, network.graph)
+    render_travel_paths(window, network.graph, edges, nodes)
     render_traffic(window, network.traffic)
 
 
@@ -236,31 +236,38 @@ def render_grid(window, grid):
 # Road Graph #
 ##############
 
-def render_node(window, node, color):
-    #TODO docstring
-    #TODO change color based on enter/exit
+def render_node(window, node: RoadSegmentNode):
+    """Render TravelGraph node"""
+    color = (255, 255, 255)
+    if node.node_type == RoadNodeType.ENTER:
+        color = (100, 100, 255)
+    elif node.node_type == RoadNodeType.EXIT:
+        color = (255, 100, 100)
+
     center = road_segment_node_to_world_coords(node)
     pygame.draw.circle(window, color, center, radius=3)
 
 
 def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
                 width=1):
-    #TODO docstring
+    """Render TravelGraph edge"""
     node_u, node_v = edge
     center_u = road_segment_node_to_world_coords(node_u)
     center_v = road_segment_node_to_world_coords(node_v)
     pygame.draw.line(window, color, center_u, center_v, width=width)
 
 
-def render_travel_paths(window, graph):
+def render_travel_paths(window, graph, edges: bool, nodes: bool):
     """Draw lines to show intersection connections"""
-    color = (255, 77, 255)  # pink
-    # Draw nodes
-    for n in graph.G.nodes:
-        render_node(window, n, color)
     # Draw edges
-    for a, b in graph.G.edges:
-        render_edge(window, (a, b), color)
+    if edges:
+        color = (255, 77, 255)  # pink
+        for a, b in graph.G.edges:
+            render_edge(window, (a, b), color)
+    # Draw nodes
+    if nodes:
+        for n in graph.G.nodes:
+            render_node(window, n)
 
 
 def render_path(window, path):
