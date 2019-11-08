@@ -6,14 +6,18 @@ from .constants import (
     TILE_WIDTH as tw,
     TILE_HEIGHT as th,
     ROAD_WIDTH as rw,
+    RoadNodeType,
     TileType,
+)
+from .grid import (
+    RoadSegmentNode,
+    road_segment_node_to_world_coords,
 )
 
 
-def render_road_network(window, network, include_travel_paths=True):
+def render_road_network(window, network, edges=True, nodes=True):
     render_grid(window, network.grid)
-    if include_travel_paths:
-        render_travel_paths(window, network.graph)
+    render_travel_paths(window, network.graph, edges, nodes)
     render_traffic(window, network.traffic)
 
 
@@ -206,7 +210,8 @@ TILE_POLYS = {
     TileType.UP_DOWN_LEFT: tile_poly(up=True, down=True, left=True),
     TileType.UP_RIGHT_LEFT: tile_poly(up=True, right=True, left=True),
     # four neighbors
-    TileType.ALL: tile_poly(up=True, right=True, down=True, left=True)
+    TileType.UP_RIGHT_DOWN_LEFT: tile_poly(up=True, right=True, down=True,
+                                           left=True)
 }
 
 
@@ -231,34 +236,38 @@ def render_grid(window, grid):
 # Road Graph #
 ##############
 
-def tile_pos_to_pixel_center(pos: Tuple[int, int]):
-    """Converts a tile position to the center pixel position for that tile"""
-    r, c = pos
-    return (c*tw + tw//2, r*th + th//2)
+def render_node(window, node: RoadSegmentNode):
+    """Render TravelGraph node"""
+    color = (255, 255, 255)
+    if node.node_type == RoadNodeType.ENTER:
+        color = (100, 100, 255)
+    elif node.node_type == RoadNodeType.EXIT:
+        color = (255, 100, 100)
 
-
-def render_node(window, pos: Tuple[int, int], color):
-    center = tile_pos_to_pixel_center(pos)
+    center = road_segment_node_to_world_coords(node)
     pygame.draw.circle(window, color, center, radius=3)
 
 
-def render_edge(window, edge: Tuple[Tuple[int, int], Tuple[int, int]], color,
+def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
                 width=1):
-    a, b = edge
-    center_a = tile_pos_to_pixel_center(a)
-    center_b = tile_pos_to_pixel_center(b)
-    pygame.draw.line(window, color, center_a, center_b, width=width)
+    """Render TravelGraph edge"""
+    node_u, node_v = edge
+    center_u = road_segment_node_to_world_coords(node_u)
+    center_v = road_segment_node_to_world_coords(node_v)
+    pygame.draw.line(window, color, center_u, center_v, width=width)
 
 
-def render_travel_paths(window, graph):
+def render_travel_paths(window, graph, edges: bool, nodes: bool):
     """Draw lines to show intersection connections"""
-    color = (255, 77, 255)  # pink
-    # Draw nodes
-    for n in graph.G.nodes:
-        render_node(window, n, color)
     # Draw edges
-    for a, b in graph.G.edges:
-        render_edge(window, (a, b), color)
+    if edges:
+        color = (255, 77, 255)  # pink
+        for a, b in graph.G.edges:
+            render_edge(window, (a, b), color)
+    # Draw nodes
+    if nodes:
+        for n in graph.G.nodes:
+            render_node(window, n)
 
 
 def render_path(window, path):
@@ -268,7 +277,7 @@ def render_path(window, path):
         return
     for idx in range(len(path)-1):
         edge = (path[idx], path[idx+1])
-        render_edge(window, edge, color, width=10)
+        render_edge(window, edge, color, width=2)
 
 
 ############
@@ -278,7 +287,7 @@ def render_path(window, path):
 def render_vehicle(window, vcl):
     """Render vehicle"""
     x, y = vcl.world_coords
-    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=8)
+    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=4)
 
 
 def render_traffic(window, traffic):
