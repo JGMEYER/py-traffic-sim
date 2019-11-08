@@ -1,6 +1,7 @@
 # Project
-media/
 .DS_Store
+media/
+program*.prof
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
