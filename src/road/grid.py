@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import networkx as nx
 
@@ -10,6 +10,9 @@ from .constants import (
     Direction,
     RoadNodeType,
     TileType,
+    Update,
+    Updateable,
+    grid_index_to_world_coords,
 )
 
 
@@ -17,13 +20,14 @@ from .constants import (
 # Tile Grid #
 #############
 
-class TileGrid():
+class TileGrid(Updateable):
     """A 2d grid of all road tiles"""
 
     def __init__(self, w, h):
         self.w = w
         self.h = h
         self.grid = [[TileType.EMPTY for c in range(w)] for r in range(h)]
+        self.updates = []
 
     def tile_type(self, r, c):
         """Return tile type of tile at index (r, c)"""
@@ -34,33 +38,49 @@ class TileGrid():
 
         restrict_to_neighbors - only allow road to be placed next to an
                                 existing tile
+        returns: tile placed
         """
         if self.grid[r][c] != TileType.EMPTY:
             return False
         if restrict_to_neighbors and not self.get_neighbors(r, c).keys():
             return False
 
-        self.grid[r][c] = self.evaluate_tile_type(r, c, modified=True)
+        self.update_tile_type(r, c, added=True)
 
-        # re-evaluate tile types of adjacent grids
+        # Update tile types of adjacent tiles
         if r-1 >= 0:
-            self.grid[r-1][c] = self.evaluate_tile_type(r-1, c)
+            self.update_tile_type(r-1, c)
         if c+1 < self.w:
-            self.grid[r][c+1] = self.evaluate_tile_type(r, c+1)
+            self.update_tile_type(r, c+1)
         if r+1 < self.h:
-            self.grid[r+1][c] = self.evaluate_tile_type(r+1, c)
+            self.update_tile_type(r+1, c)
         if c-1 >= 0:
-            self.grid[r][c-1] = self.evaluate_tile_type(r, c-1)
+            self.update_tile_type(r, c-1)
 
         return True
 
-    def evaluate_tile_type(self, r, c, modified=False):
+    def update_tile_type(self, r, c, added=False):
+        """Update the tile type for the tile at the provided coordinate.
+
+        added - whether the tile is being added to the grid, i.e. changed from
+                TileType.EMPTY via this operation
+        """
+        old_type = self.grid[r][c]
+        new_type = self.evaluate_tile_type(r, c, added=added)
+
+        if new_type != old_type:
+            self.grid[r][c] = new_type
+            u_type = Update.ADDED if added else Update.MODIFIED
+            self.updates.append((u_type, (r, c, new_type)))
+
+    def evaluate_tile_type(self, r, c, added=False):
         """Determine the tile type for the tile at the provided coordinate.
 
-        modified - whether the state of the tile was recently directly changed,
-                   e.g. via an "add" or "remove" action
+        added - whether the tile would be newly added to the grid, i.e. changed
+                from TileType.EMPTY
         """
-        if not modified and self.grid[r][c] == TileType.EMPTY:
+        # Don't update empty spaces unless we recently added a tile there
+        if not added and self.grid[r][c] == TileType.EMPTY:
             return TileType.EMPTY
 
         nbrs = self.get_neighbors(r, c)
@@ -108,7 +128,7 @@ class TileGrid():
             return TileType.UP_RIGHT_DOWN_LEFT
 
     def get_neighbors(self, r, c):
-        """Get tile neighbors adjacent to specified tile index """
+        """Get tile metadata of neighbors adjacent to specified tile index"""
         nbrs: Dict[Direction, Tuple[Tuple[int, int], TileType]] = {}
 
         if r-1 >= 0 and self.tile_type(r-1, c) != TileType.EMPTY:
@@ -125,22 +145,11 @@ class TileGrid():
 
         return nbrs
 
-
-def grid_index_to_world_coords(r, c, center=False):
-    """Convert (row, col) index on the grid to (x, y) coordinate on the world
-    plane.
-    """
-    if center:
-        return (c*tw+tw//2, r*th+th//2)
-    else:
-        return (c*tw, r*th)
-
-
-def world_coords_to_grid_index(x, y):
-    """Convert (x, y) coordinate on the world plane to the corresponding
-    (row, col) index on the grid.
-    """
-    return (y//th, x//tw)
+    def get_updates(self) -> List[Tuple[Update, Tuple[int, int, TileType]]]:
+        """Get updates and clear updates queue"""
+        updates = self.updates
+        self.updates = []
+        return updates
 
 
 ################
@@ -264,6 +273,7 @@ class TravelGraph():
     def __init__(self):
         self.G = nx.DiGraph()
         self.intersections: Dict[Tuple[int, int], TravelIntersection] = {}
+        self.updates = []
 
     def register_tile_intersection(self, r, c, tile_type,
                                    nbrs: Dict[Direction, Tuple[Tuple[int, int],

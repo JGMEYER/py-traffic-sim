@@ -1,6 +1,8 @@
-from typing import Tuple
+from enum import IntEnum
+from typing import Dict, Tuple
 
 import pygame
+from pygame import sprite
 
 from .constants import (
     TILE_WIDTH as tw,
@@ -8,19 +10,228 @@ from .constants import (
     ROAD_WIDTH as rw,
     RoadNodeType,
     TileType,
+    Update,
+    grid_index_to_world_coords,
 )
 from .grid import RoadSegmentNode
 
 
+class Color():
+    """Game colors"""
+    BG = (255, 255, 255)  # background
+    ROAD = (0, 0, 0)
+    ROAD_NODE_DEFAULT = (255, 255, 255)
+    ROAD_NODE_ENTER = (100, 100, 255)
+    ROAD_NODE_EXIT = (255, 100, 100)
+    VEHICLE_DEFAULT = (255, 255, 0)
+
+
+class RoadScreenLayers(IntEnum):
+    """Game screen layers
+
+    0 = base layer. The higher the number to closer the sprite.
+    """
+    BG = 0
+    TILES = 1
+    TRAVEL_EDGES = 2
+    ROAD_SEGMENT_NODES = 3
+    VEHICLES = 4
+
+
+# TODO docstrings
+# TODO reorganize functions
+
 def render_road_network(window, network, edges=True, nodes=True):
-    render_grid(window, network.grid)
-    render_travel_paths(window, network.graph, edges, nodes)
-    render_traffic(window, network.traffic)
+    # render_grid(window, network.grid)
+    # render_travel_paths(window, network.graph, edges, nodes)
+    # render_traffic(window, network.traffic)
+    pass
+
+
+class BackgroundSprite(sprite.DirtySprite):
+    """Background Sprite"""
+
+    def __init__(self, w, h):
+        sprite.DirtySprite.__init__(self)
+
+        self.image, self.rect = self._image(w, h)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0  # TODO: confirm this means "no blend"
+
+    def _image(self, w, h):
+        image = pygame.Surface([w, h])
+        image.fill(Color.BG)
+
+        rect = image.get_rect()
+        rect.x, rect.y = (0, 0)
+
+        return image, rect
+
+
+class TileSprite(sprite.DirtySprite):
+    """Road Tile Sprite"""
+
+    def __init__(self, r, c, tile_type):
+        sprite.DirtySprite.__init__(self)
+
+        self.r = r
+        self.c = c
+
+        self.image, self.rect = self._image(r, c, tile_type)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0  # TODO: confirm this means "no blend"
+
+    def _image(self, r, c, tile_type):
+        image = pygame.Surface([tw, th])
+        # self.image.fill(BG_COLOR)
+        pygame.draw.polygon(image, Color.ROAD, TILE_POLYS[tile_type])
+
+        rect = image.get_rect()
+        rect.x, rect.y = grid_index_to_world_coords(r, c)
+
+        return image, rect
+
+    def update(self, r, c, tile_type):
+        self.image, self.rect = self._image(r, c, tile_type)
+        self.dirty = 1
+
+
+# class TravelEdgeSprite(sprite.DirtySprite):
+#     """Travel Edge Sprite"""
+#
+#     def __init__(self, edge: Tuple[RoadSegmentNode, RoadSegmentNode]):
+#         sprite.DirtySprite.__init__(self)
+#
+#         self.image = self._image(edge)
+#         self.rect = self.image.get_rect()
+#
+#         # TODO align rect at top left most node's position
+#
+#     def _image(self, edge):
+#         # TODO create image size (abs(x1-x2), abs(y1-y2))
+#         pass
+#
+#
+# class RoadNodeSprite(sprite.DirtySprite):
+#     """Road Node Edge"""
+#
+#     RADIUS = 3
+#
+#     def __init__(self, node):
+#         sprite.DirtySprite.__init__(self)
+#
+#         self.image = self._image(node)
+#         self.rect = self.image.get_rect()
+#
+#         self.rect.x, self.rect.y = node.world_coords
+#
+#     def _image(self, node):
+#         self.image = pygame.Surface([self.RADIUS, self.RADIUS])
+#
+#         color = Color.ROAD_NODE_DEFAULT  # generally not used
+#         if node.node_type == RoadNodeType.ENTER:
+#             color = Color.ROAD_NODE_ENTER
+#         elif node.node_type == RoadNodeType.EXIT:
+#             color = Color.ROAD_NODE_EXIT
+#
+#         pygame.draw.circle(self.image, color, (self.RADIUS/2, self.RADIUS/2),
+#                            radius=self.RADIUS)
+
+class VehicleSprite(sprite.DirtySprite):
+    """Vehicle sprite"""
+
+    RADIUS = 4
+
+    def __init__(self, x, y):
+        sprite.DirtySprite.__init__(self)
+
+        self.image, self.rect = self._image(x, y)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0  # TODO: confirm this means "no blend"
+
+    def _image(self, x, y):
+        image = pygame.Surface([self.RADIUS*2+1, self.RADIUS*2+1])
+        pygame.draw.circle(image, Color.VEHICLE_DEFAULT,
+                           (self.RADIUS, self.RADIUS),
+                           radius=self.RADIUS)
+
+        rect = image.get_rect()
+        rect.x, rect.y = x-self.RADIUS, y-self.RADIUS
+
+        return image, rect
+
+    def update(self, x, y):
+        self.rect.x, self.rect.y = x-self.RADIUS, y-self.RADIUS
+        self.dirty = 1
+
+
+class RoadScreen(sprite.LayeredDirty):
+
+    def __init__(self, network):
+        sprite.LayeredDirty.__init__(self)
+        self.w = network.w
+        self.h = network.h
+        self.network = network
+
+        # Background
+        self.bg = BackgroundSprite(tw*self.w, th*self.h)
+        # self.add(self.bg, layer=RoadScreenLayers.TILES)
+
+        # Other sprite indexes
+        self.tiles: Dict[Tuple[int, int], TileSprite] = {}
+        # TODO nodes
+        # TODO edges
+        self.vehicles: Dict[int, VehicleSprite] = {}
+
+    def update(self):
+        self._update_tiles()
+        # TODO nodes
+        # TODO edges
+        self._update_vehicles()
+        # print(len(self.tiles.keys()), len([t for t in self.tiles.values() if t.dirty]))
+        # print(len(self.tiles.keys()), len([t for t in self.tiles.values() if t.visible]))
+
+    def _update_tiles(self):
+        """Update tile sprites with updates from network"""
+        # TODO add way to change bg if tile is being moused over
+        updates = self.network.grid.get_updates()
+
+        for u_type, (r, c, tile_type) in updates:
+            if u_type == Update.ADDED:
+                sprite = TileSprite(r, c, tile_type)
+                self.tiles[(r, c)] = sprite
+                self.add(sprite, layer=RoadScreenLayers.TILES)
+
+            elif u_type == Update.MODIFIED:
+                self.tiles[(r, c)].update(r, c, tile_type)
+
+    def _update_vehicles(self):
+        """Update vehicle sprites with updates from network"""
+        updates = self.network.traffic.get_updates()
+
+        for u_type, (id, x, y) in updates:
+            if u_type == Update.ADDED:
+                sprite = VehicleSprite(x, y)
+                self.vehicles[id] = sprite
+                self.add(sprite, layer=RoadScreenLayers.VEHICLES)
+
+            elif u_type == Update.MODIFIED:
+                self.vehicles[id].update(x, y)
 
 
 #########
 # Tiles #
 #########
+
 
 def tile_poly(up=False, right=False, down=False, left=False):
     """Construct polygon based on road connections.
@@ -212,82 +423,82 @@ TILE_POLYS = {
 }
 
 
-def render_tile(window, r, c, road_type):
-    """Draw single road tile to window"""
-    points = TILE_POLYS[road_type]
-    if not points:
-        return
-    translated_points = [(x + tw * c, y + th * r)
-                         for (x, y) in points]
-    pygame.draw.polygon(window, (0, 0, 0), translated_points)
-
-
-def render_grid(window, grid):
-    """Draw all road tiles in grid to window"""
-    for r in range(grid.h):
-        for c in range(grid.w):
-            render_tile(window, r, c, grid.grid[r][c])
+# def render_tile(window, r, c, road_type):
+#     """Draw single road tile to window"""
+#     points = TILE_POLYS[road_type]
+#     if not points:
+#         return
+#     translated_points = [(x + tw * c, y + th * r)
+#                          for (x, y) in points]
+#     pygame.draw.polygon(window, (0, 0, 0), translated_points)
+#
+#
+# def render_grid(window, grid):
+#     """Draw all road tiles in grid to window"""
+#     for r in range(grid.h):
+#         for c in range(grid.w):
+#             render_tile(window, r, c, grid.grid[r][c])
 
 
 ##############
 # Road Graph #
 ##############
 
-def render_node(window, node: RoadSegmentNode):
-    """Render TravelGraph node"""
-    color = (255, 255, 255)
-    if node.node_type == RoadNodeType.ENTER:
-        color = (100, 100, 255)
-    elif node.node_type == RoadNodeType.EXIT:
-        color = (255, 100, 100)
-
-    center = node.world_coords
-    pygame.draw.circle(window, color, center, radius=3)
-
-
-def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
-                width=1):
-    """Render TravelGraph edge"""
-    node_u, node_v = edge
-    center_u = node_u.world_coords
-    center_v = node_v.world_coords
-    pygame.draw.line(window, color, center_u, center_v, width=width)
-
-
-def render_travel_paths(window, graph, edges: bool, nodes: bool):
-    """Draw lines to show intersection connections"""
-    # Draw edges
-    if edges:
-        color = (255, 77, 255)  # pink
-        for a, b in graph.G.edges:
-            render_edge(window, (a, b), color)
-    # Draw nodes
-    if nodes:
-        for n in graph.G.nodes:
-            render_node(window, n)
-
-
-def render_path(window, path):
-    """Render path from graph"""
-    color = (0, 255, 0)  # green
-    if len(path) < 2:
-        return
-    for idx in range(len(path)-1):
-        edge = (path[idx], path[idx+1])
-        render_edge(window, edge, color, width=2)
+# def render_node(window, node: RoadSegmentNode):
+#     """Render TravelGraph node"""
+#     color = (255, 255, 255)
+#     if node.node_type == RoadNodeType.ENTER:
+#         color = (100, 100, 255)
+#     elif node.node_type == RoadNodeType.EXIT:
+#         color = (255, 100, 100)
+#
+#     center = node.world_coords
+#     pygame.draw.circle(window, color, center, radius=3)
+#
+#
+# def render_edge(window, edge: Tuple[RoadSegmentNode, RoadSegmentNode], color,
+#                 width=1):
+#     """Render TravelGraph edge"""
+#     node_u, node_v = edge
+#     center_u = node_u.world_coords
+#     center_v = node_v.world_coords
+#     pygame.draw.line(window, color, center_u, center_v, width=width)
+#
+#
+# def render_travel_paths(window, graph, edges: bool, nodes: bool):
+#     """Draw lines to show intersection connections"""
+#     # Draw edges
+#     if edges:
+#         color = (255, 77, 255)  # pink
+#         for a, b in graph.G.edges:
+#             render_edge(window, (a, b), color)
+#     # Draw nodes
+#     if nodes:
+#         for n in graph.G.nodes:
+#             render_node(window, n)
+#
+#
+# def render_path(window, path):
+#     """Render path from graph"""
+#     color = (0, 255, 0)  # green
+#     if len(path) < 2:
+#         return
+#     for idx in range(len(path)-1):
+#         edge = (path[idx], path[idx+1])
+#         render_edge(window, edge, color, width=2)
 
 
 ############
 # Vehicles #
 ############
 
-def render_vehicle(window, vcl):
-    """Render vehicle"""
-    x, y = vcl.world_coords
-    pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=4)
-
-
-def render_traffic(window, traffic):
-    """Render all vehicles"""
-    for v in traffic.vehicles:
-        render_vehicle(window, v)
+# def render_vehicle(window, vcl):
+#     """Render vehicle"""
+#     x, y = vcl.world_coords
+#     pygame.draw.circle(window, (255, 255, 0), (round(x), round(y)), radius=4)
+#
+#
+# def render_traffic(window, traffic):
+#     """Render all vehicles"""
+#     for v in traffic.vehicles:
+#         render_vehicle(window, v)
