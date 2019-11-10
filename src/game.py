@@ -32,6 +32,10 @@ def exit():
     sys.exit()
 
 
+# DEMO
+STRESS_TEST = False
+
+
 ##############
 # Game Logic #
 ##############
@@ -47,8 +51,7 @@ def game_loop(window):
     road_screen.clear(window, road_screen.bg.image)
 
     # DEMO
-    stress_test = True
-    if stress_test:
+    if STRESS_TEST:
         import random
         network.add_road(0, 0, restrict_to_neighbors=False)
         # Fill entire network grid
@@ -62,22 +65,11 @@ def game_loop(window):
     else:
         network.add_road(network.h//2, network.w//2,
                          restrict_to_neighbors=False)
-    # from road.grid import RoadSegmentNode
-    # from road.constants import RoadNodeType, Direction
-    # node_a = RoadSegmentNode((0, 0), Direction.RIGHT, RoadNodeType.EXIT)
-    # node_b = RoadSegmentNode((GRID_HEIGHT-1, GRID_WIDTH-1),
-    #                          Direction.RIGHT, RoadNodeType.EXIT)
-    # network.graph.G.add_edge(node_a, node_b)
-    # v = network.traffic.add_vehicle(node_a)
-    # v.path = [node_b, node_a, node_b, node_a]
 
     while 1:
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
         process_input(window, network)
-
-        # Set background
-        # window.fill((255, 255, 255))
 
         # # Render mouse grid cursor
         # display_tile_cursor(window)
@@ -85,18 +77,12 @@ def game_loop(window):
         # Step road network one tick
         network.step()
 
-        # # Render road network
-        # road_gfx.render_road_network(window, network, edges=True, nodes=True)
-
         # DEMO
         randomize_vehicle_paths(window, network)
 
         # Update our display
-        # window.blit(road_screen.bg.image, (0, 0))
         road_screen.update()
         rects = road_screen.draw(window)
-        # if rects:
-        #     print(rects)
         pygame.display.update(rects)
 
 
@@ -111,7 +97,6 @@ def randomize_vehicle_paths(window, network):
             random_node = random.choice(list(network.graph.G.nodes))
             path = network.graph.shortest_path(v.last_node, random_node)
             v.set_path(path)
-        # road_gfx.render_path(window, v.path)
 
 
 #########
@@ -133,15 +118,17 @@ def process_input(window, network):
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
     r, c = input.mouse_coords_to_grid_index(tw, th)
-    network.add_road(r, c)
+    road_added = network.add_road(r, c)
 
-    # # DEMO
-    # import random
-    # if road_added and random.random() < 0.3:
-    #     node = random.choice(list(network.graph.G.nodes))
-    #     network.traffic.add_vehicle(node)
+    # DEMO
+    if not STRESS_TEST:
+        import random
+        if road_added and random.random() < 0.3:
+            node = random.choice(list(network.graph.G.nodes))
+            network.traffic.add_vehicle(node)
 
 
+# BROKEN
 def display_tile_cursor(window):
     """Highlights tile underneath mouse"""
     r, c = input.mouse_coords_to_grid_index(tw, th)

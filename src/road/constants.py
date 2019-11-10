@@ -119,8 +119,3 @@ class Updateable(metaclass=ABCMeta):
         """Retrieve latest updates. Updates queue MUST be cleared once called.
         """
         raise NotImplementedError
-
-
-
-if __name__ == "__main__":
-    print(TileType.UP_RIGHT_DOWN_LEFT.segment_directions())

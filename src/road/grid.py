@@ -260,7 +260,7 @@ class TravelIntersection():
                 self.nodes[dir][RoadNodeType.EXIT])
 
 
-class TravelGraph():
+class TravelGraph(Updateable):
     """A graph of all intersection nodes
 
     All nodes are of type `RoadSegmentNode`.
@@ -274,6 +274,18 @@ class TravelGraph():
         self.G = nx.DiGraph()
         self.intersections: Dict[Tuple[int, int], TravelIntersection] = {}
         self.updates = []
+
+    def _add_edge(self, u_node, v_node):
+        """Add edge. This should be called instead of removing from the graph
+        directly."""
+        self.G.add_edge(u_node, v_node)
+        self.updates.append((Update.ADDED, (u_node, v_node)))
+
+    def _remove_edge(self, u_node, v_node):
+        """Remove edge. This should be called instead of removing from the
+        graph directly."""
+        self.G.remove_edge(u_node, v_node)
+        self.updates.append((Update.REMOVED, (u_node, v_node)))
 
     def register_tile_intersection(self, r, c, tile_type,
                                    nbrs: Dict[Direction, Tuple[Tuple[int, int],
@@ -299,8 +311,8 @@ class TravelGraph():
             n_insct = self.intersections[(n_r, n_c)]
             enter, exit = insct.get_nodes_for_segment(dir)
             n_enter, n_exit = n_insct.get_nodes_for_segment(dir.opposite())
-            self.G.add_edge(exit, n_enter)
-            self.G.add_edge(n_exit, enter)
+            self._add_edge(exit, n_enter)
+            self._add_edge(n_exit, enter)
 
         self.intersections[(r, c)] = insct
 
@@ -318,7 +330,7 @@ class TravelGraph():
         for dir in insct.segments():
             enter, exit = insct.get_nodes_for_segment(dir)
             try:
-                self.G.remove_edge(enter, exit)
+                self._remove_edge(enter, exit)
             except nx.NetworkXError:
                 # No edge between enter and exit
                 pass
@@ -335,7 +347,7 @@ class TravelGraph():
         # U-Turn at dead-ends.
         if len(segments) == 1:
             enter, exit = insct.get_nodes_for_segment(segments[0])
-            self.G.add_edge(enter, exit)
+            self._add_edge(enter, exit)
 
         # Connect segments' ENTER nodes to other segments' EXIT nodes
         # This is overkill when we're updating an intersection since most edges
@@ -348,9 +360,15 @@ class TravelGraph():
                     if exit.dir == enter.dir:
                         continue
                     # Add the edge, even if it already exists
-                    self.G.add_edge(enter, exit)
+                    self._add_edge(enter, exit)
 
     def shortest_path(self, source_node, target_node):
         """Get the shortest path from source node to target node"""
-        # nx.shortest_path(self.G, source=source_node, target=target_node)
         return nx.shortest_path(self.G, source=source_node, target=target_node)
+
+    def get_updates(self) -> List[Tuple[Update, Tuple[RoadSegmentNode,
+                                                      RoadSegmentNode]]]:
+        """Get updates and clear updates queue"""
+        updates = self.updates
+        self.updates = []
+        return updates
