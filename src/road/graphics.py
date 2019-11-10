@@ -15,6 +15,11 @@ from .constants import (
 from .grid import RoadSegmentNode
 
 
+#############
+# Constants #
+#############
+
+
 class Settings():
     """Display settings"""
     DISPLAY_EDGES = 0
@@ -40,136 +45,19 @@ class RoadScreenLayers(IntEnum):
     VEHICLES = 4
 
 
-# TODO docstrings
-# TODO reorganize functions
-
-
-class BackgroundSprite(sprite.DirtySprite):
-    """Background Sprite"""
-
-    def __init__(self, w, h):
-        sprite.DirtySprite.__init__(self)
-
-        self.image, self.rect = self._image(w, h)
-
-        # Required attributes to add to LayeredDirty
-        self.dirty = 1
-        self.visible = 1
-        self.blendmode = 0
-
-    def _image(self, w, h):
-        image = pygame.Surface([w, h])
-        image.fill(Color.BG)
-
-        rect = image.get_rect()
-        rect.x, rect.y = (0, 0)
-
-        return image, rect
-
-
-class TileSprite(sprite.DirtySprite):
-    """Sprite for a road tile"""
-
-    def __init__(self, r, c, tile_type):
-        sprite.DirtySprite.__init__(self)
-
-        self.r = r
-        self.c = c
-
-        self.image, self.rect = self._image(r, c, tile_type)
-
-        # Required attributes to add to LayeredDirty
-        self.dirty = 1
-        self.visible = 1
-        self.blendmode = 0
-
-    def _image(self, r, c, tile_type, highlighted=False):
-        image = pygame.Surface([tw, th])
-        pygame.draw.polygon(image, Color.ROAD, TILE_POLYS[tile_type])
-
-        rect = image.get_rect()
-        rect.x, rect.y = grid_index_to_world_coords(r, c)
-
-        return image, rect
-
-    def update(self, r, c, tile_type, highlighted=False):
-        self.image, self.rect = self._image(r, c, tile_type)
-        self.dirty = 1
-
-
-class TravelEdgeSprite(sprite.DirtySprite):
-    """Sprite for an edge on the travel graph"""
-
-    LINE_WIDTH = 1
-
-    def __init__(self, node_u, node_v):
-        sprite.DirtySprite.__init__(self)
-
-        self.image, self.rect = self._image(node_u, node_v)
-
-        # Required attributes to add to LayeredDirty
-        self.dirty = 1
-        self.visible = Settings.DISPLAY_EDGES  # bit of a hack for now
-        self.blendmode = 0
-
-    def _image(self, node_u, node_v):
-        u_x, u_y = node_u.world_coords
-        v_x, v_y = node_v.world_coords
-
-        # Get dimensions of surface, making sure to save at least LINE_WIDTH
-        # space for vertical and horizontal lines.
-        w = max(int(abs(u_x - v_x)), self.LINE_WIDTH)
-        h = max(int(abs(u_y - v_y)), self.LINE_WIDTH)
-
-        # Get offset from (0, 0) to top left corner of surface
-        x_offset, y_offset = min(u_x, v_x), min(u_y, v_y)
-
-        # Get x and y values local to surface
-        local_u_x, local_u_y = u_x - x_offset, u_y - y_offset
-        local_v_x, local_v_y = v_x - x_offset, v_y - y_offset
-
-        image = pygame.Surface([w, h])
-        pygame.draw.line(image, Color.TRAVEL_EDGE, (local_u_x, local_u_y),
-                         (local_v_x, local_v_y), width=self.LINE_WIDTH)
-
-        rect = image.get_rect()
-        rect.x, rect.y = x_offset, y_offset
-
-        return image, rect
-
-
-class VehicleSprite(sprite.DirtySprite):
-    """Vehicle sprite"""
-
-    RADIUS = 4
-
-    def __init__(self, x, y):
-        sprite.DirtySprite.__init__(self)
-
-        self.image, self.rect = self._image(x, y)
-
-        # Required attributes to add to LayeredDirty
-        self.dirty = 1
-        self.visible = 1
-        self.blendmode = 0
-
-    def _image(self, x, y):
-        image = pygame.Surface([self.RADIUS*2+1, self.RADIUS*2+1])
-        pygame.draw.circle(image, Color.VEHICLE_DEFAULT,
-                           (self.RADIUS, self.RADIUS),
-                           radius=self.RADIUS)
-
-        rect = image.get_rect()
-        rect.x, rect.y = x-self.RADIUS, y-self.RADIUS
-
-        return image, rect
-
-    def update(self, x, y):
-        self.rect.x, self.rect.y = x-self.RADIUS, y-self.RADIUS
-        self.dirty = 1
+##########
+# Screen #
+##########
 
 
 class RoadScreen(sprite.LayeredDirty):
+    """Manages all sprites for rendering a `RoadNetwork`.
+
+    RoadScreen fetches updates from a network's components via get_updates()
+    and updates their corresponding sprites accordingly.
+
+    Sprites are grouped and layered to match the order of `RoadScreenLayers`.
+    """
 
     def __init__(self, network):
         sprite.LayeredDirty.__init__(self)
@@ -179,7 +67,7 @@ class RoadScreen(sprite.LayeredDirty):
 
         # Background
         self.bg = BackgroundSprite(tw*self.w, th*self.h)
-        # self.add(self.bg, layer=RoadScreenLayers.TILES)
+        self.add(self.bg, layer=RoadScreenLayers.TILES)
 
         # Other sprite indexes
         self.tiles: Dict[Tuple[int, int], TileSprite] = {}
@@ -239,9 +127,145 @@ class RoadScreen(sprite.LayeredDirty):
                 self.vehicles[id].update(x, y)
 
 
-#########
-# Tiles #
-#########
+###########
+# Sprites #
+###########
+
+
+class BackgroundSprite(sprite.DirtySprite):
+    """Background Sprite"""
+
+    def __init__(self, w, h):
+        sprite.DirtySprite.__init__(self)
+
+        self.image, self.rect = self._image(w, h)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0
+
+    def _image(self, w, h):
+        """Create background image"""
+        image = pygame.Surface([w, h])
+        image.fill(Color.BG)
+
+        rect = image.get_rect()
+        rect.x, rect.y = (0, 0)
+
+        return image, rect
+
+
+class TileSprite(sprite.DirtySprite):
+    """Sprite for a road tile"""
+
+    def __init__(self, r, c, tile_type):
+        sprite.DirtySprite.__init__(self)
+
+        self.r = r
+        self.c = c
+
+        self.image, self.rect = self._image(r, c, tile_type)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0
+
+    def _image(self, r, c, tile_type, highlighted=False):
+        """Create tile image"""
+        image = pygame.Surface([tw, th])
+        pygame.draw.polygon(image, Color.ROAD, TILE_POLYS[tile_type])
+
+        rect = image.get_rect()
+        rect.x, rect.y = grid_index_to_world_coords(r, c)
+
+        return image, rect
+
+    def update(self, r, c, tile_type, highlighted=False):
+        """Update tile type"""
+        self.image, self.rect = self._image(r, c, tile_type)
+        self.dirty = 1
+
+
+class TravelEdgeSprite(sprite.DirtySprite):
+    """Sprite for an edge on the travel graph"""
+
+    LINE_WIDTH = 1
+
+    def __init__(self, node_u, node_v):
+        sprite.DirtySprite.__init__(self)
+
+        self.image, self.rect = self._image(node_u, node_v)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = Settings.DISPLAY_EDGES  # bit of a hack for now
+        self.blendmode = 0
+
+    def _image(self, node_u, node_v):
+        """Create edge image"""
+        u_x, u_y = node_u.world_coords
+        v_x, v_y = node_v.world_coords
+
+        # Get dimensions of surface, making sure to save at least LINE_WIDTH
+        # space for vertical and horizontal lines.
+        w = max(int(abs(u_x - v_x)), self.LINE_WIDTH)
+        h = max(int(abs(u_y - v_y)), self.LINE_WIDTH)
+
+        # Get offset from (0, 0) to top left corner of surface
+        x_offset, y_offset = min(u_x, v_x), min(u_y, v_y)
+
+        # Get x and y values local to surface
+        local_u_x, local_u_y = u_x - x_offset, u_y - y_offset
+        local_v_x, local_v_y = v_x - x_offset, v_y - y_offset
+
+        image = pygame.Surface([w, h])
+        pygame.draw.line(image, Color.TRAVEL_EDGE, (local_u_x, local_u_y),
+                         (local_v_x, local_v_y), width=self.LINE_WIDTH)
+
+        rect = image.get_rect()
+        rect.x, rect.y = x_offset, y_offset
+
+        return image, rect
+
+
+class VehicleSprite(sprite.DirtySprite):
+    """Vehicle sprite"""
+
+    RADIUS = 4
+
+    def __init__(self, x, y):
+        sprite.DirtySprite.__init__(self)
+
+        self.image, self.rect = self._image(x, y)
+
+        # Required attributes to add to LayeredDirty
+        self.dirty = 1
+        self.visible = 1
+        self.blendmode = 0
+
+    def _image(self, x, y):
+        """Create vehicle image"""
+        image = pygame.Surface([self.RADIUS*2+1, self.RADIUS*2+1])
+        pygame.draw.circle(image, Color.VEHICLE_DEFAULT,
+                           (self.RADIUS, self.RADIUS),
+                           radius=self.RADIUS)
+
+        rect = image.get_rect()
+        rect.x, rect.y = x-self.RADIUS, y-self.RADIUS
+
+        return image, rect
+
+    def update(self, x, y):
+        """Update vehicle location"""
+        self.rect.x, self.rect.y = x-self.RADIUS, y-self.RADIUS
+        self.dirty = 1
+
+
+##############
+# Tile Polys #
+##############
 
 
 def tile_poly(up=False, right=False, down=False, left=False):
