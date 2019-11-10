@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import pygame
 from pygame import sprite
 
-from .constants import (
+from .common import (
     TILE_WIDTH as tw,
     TILE_HEIGHT as th,
     ROAD_WIDTH as rw,

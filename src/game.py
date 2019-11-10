@@ -3,7 +3,7 @@ import sys
 
 import input
 from road import graphics as road_gfx
-from road.constants import TILE_WIDTH as tw, TILE_HEIGHT as th
+from road.common import TILE_WIDTH as tw, TILE_HEIGHT as th
 from road.network import RoadNetwork
 
 GRID_WIDTH = 25

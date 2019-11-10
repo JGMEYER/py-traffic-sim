@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List, Tuple
 
-from .constants import TILE_WIDTH as tw, Update, Updateable
+from .common import TILE_WIDTH as tw, Update, Updateable
 from .grid import RoadSegmentNode
 
 
