@@ -24,10 +24,10 @@ class Traffic(Updateable):
         self.updates.append((Update.ADDED, (v.id, x, y)))
         return v
 
-    def step(self):
+    def step(self, tick):
         """Step each vehicle in traffic list"""
         for v in self.vehicles:
-            v.step()
+            v.step(tick)
 
     def get_updates(self) -> List[Tuple[Update, Tuple[int, float, float]]]:
         """Get updates and clear updates queue"""
@@ -48,7 +48,7 @@ class Vehicle():
     def __init__(self, id, node: RoadSegmentNode):
         # Attributes
         self.id = id
-        self.speed = 0.05 * tw  # WARNING: could have undesirable behavior
+        self.speed = 1 * tw  # WARNING: could have undesirable behavior
 
         # Location
         self.world_coords = node.world_coords
@@ -80,7 +80,7 @@ class Vehicle():
         norm = np.linalg.norm(vector)
 
         # We reached our target
-        if norm <= max_move_dist:
+        if max_move_dist >= norm:
             self.world_coords = (target_x, target_y)
             return max_move_dist - norm
 
@@ -89,11 +89,11 @@ class Vehicle():
                                   + max_move_dist * np.array(unit))
         return max_move_dist
 
-    def step(self):
+    def step(self, tick):
         """Move a distance based on our speed towards the next node in our
         path, readjusting targets as needed in case we reach them mid-step.
         """
-        remaining_move_dist = self.speed
+        remaining_move_dist = self.speed * tick
 
         while remaining_move_dist > 0:
             if not self.path:

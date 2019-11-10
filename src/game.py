@@ -18,11 +18,17 @@ def init():
     """Initialize game window"""
     # Initialise all the pygame modules
     pygame.init()
+
     # Create a game window
     game_window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
     # Set title
     pygame.display.set_caption("Traffic Simulator")
-    return game_window
+
+    # Initialize clock
+    clock = pygame.time.Clock()
+
+    return game_window, clock
 
 
 def exit():
@@ -40,7 +46,7 @@ STRESS_TEST = False
 # Game Logic #
 ##############
 
-def game_loop(window):
+def game_loop(window, clock):
     """Game loop"""
 
     # Create road network
@@ -67,6 +73,9 @@ def game_loop(window):
                          restrict_to_neighbors=False)
 
     while 1:
+        # Get loop time, convert milliseconds to seconds
+        tick = clock.tick(60)/1000
+
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
         process_input(window, network)
@@ -75,7 +84,7 @@ def game_loop(window):
         # display_tile_cursor(window)
 
         # Step road network one tick
-        network.step()
+        network.step(tick)
 
         # DEMO
         randomize_vehicle_paths(window, network)
@@ -139,6 +148,6 @@ def display_tile_cursor(window):
 
 
 if __name__ == "__main__":
-    game_window = init()
-    game_loop(game_window)
+    game_window, clock = init()
+    game_loop(game_window, clock)
     exit()

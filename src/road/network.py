@@ -29,6 +29,6 @@ class RoadNetwork():
             return True
         return False
 
-    def step(self):
-        """Step the network one tick"""
-        self.traffic.step()
+    def step(self, tick):
+        """Step the network by some amount of ticks"""
+        self.traffic.step(tick)
