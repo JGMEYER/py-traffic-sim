@@ -25,7 +25,7 @@ if [ "$exec" = true ] ; then
   # Run game and generate profile
   pipenv run python -m cProfile -o program.prof src/game.py &&
   pipenv run snakeviz program.prof
+else
+  # View profile
+  pipenv run snakeviz program.prof
 fi
-
-# Run snakeviz visual profile
-# pipenv run snakeviz program.prof

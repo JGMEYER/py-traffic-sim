@@ -1,4 +1,6 @@
+from abc import ABCMeta, abstractmethod
 from enum import IntEnum
+from typing import List, Tuple
 
 ###################
 # Tile properties #
@@ -53,6 +55,23 @@ class TileType(IntEnum):
         return dirs
 
 
+def grid_index_to_world_coords(r, c, center=False):
+    """Convert (row, col) index on the grid to (x, y) coordinate on the world
+    plane.
+    """
+    if center:
+        return (c*TILE_WIDTH+TILE_WIDTH//2, r*TILE_HEIGHT+TILE_HEIGHT//2)
+    else:
+        return (c*TILE_WIDTH, r*TILE_HEIGHT)
+
+
+def world_coords_to_grid_index(x, y):
+    """Convert (x, y) coordinate on the world plane to the corresponding
+    (row, col) index on the grid.
+    """
+    return (y//TILE_HEIGHT, x//TILE_WIDTH)
+
+
 ####################
 # Graph properties #
 ####################
@@ -85,5 +104,18 @@ class Direction(IntEnum):
         return opposites[self]
 
 
-if __name__ == "__main__":
-    print(TileType.UP_RIGHT_DOWN_LEFT.segment_directions())
+class Update(IntEnum):
+    """Update types"""
+    ADDED = 0
+    REMOVED = 1
+    MODIFIED = 2
+
+
+class Updateable(metaclass=ABCMeta):
+    """A class that is has trackable updates."""
+
+    @abstractmethod
+    def get_updates() -> List[Tuple[Update, object]]:
+        """Retrieve latest updates. Updates queue MUST be cleared once called.
+        """
+        raise NotImplementedError

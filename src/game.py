@@ -3,26 +3,32 @@ import sys
 
 import input
 from road import graphics as road_gfx
-from road.constants import TILE_WIDTH, TILE_HEIGHT
+from road.constants import TILE_WIDTH as tw, TILE_HEIGHT as th
 from road.network import RoadNetwork
 
 GRID_WIDTH = 25
 GRID_HEIGHT = 15
 
 # Create width and height constants
-WINDOW_WIDTH = TILE_WIDTH * GRID_WIDTH
-WINDOW_HEIGHT = TILE_HEIGHT * GRID_HEIGHT
+WINDOW_WIDTH = tw * GRID_WIDTH
+WINDOW_HEIGHT = th * GRID_HEIGHT
 
 
 def init():
     """Initialize game window"""
     # Initialise all the pygame modules
     pygame.init()
+
     # Create a game window
     game_window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
     # Set title
     pygame.display.set_caption("Traffic Simulator")
-    return game_window
+
+    # Initialize clock
+    clock = pygame.time.Clock()
+
+    return game_window, clock
 
 
 def exit():
@@ -32,19 +38,26 @@ def exit():
     sys.exit()
 
 
+# DEMO
+STRESS_TEST = False
+
+
 ##############
 # Game Logic #
 ##############
 
-def game_loop(window):
+def game_loop(window, clock):
     """Game loop"""
 
     # Create road network
     network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
 
+    # Create road screen (for rendering)
+    road_screen = road_gfx.RoadScreen(network)
+    road_screen.clear(window, road_screen.bg.image)
+
     # DEMO
-    stress_test = False
-    if stress_test:
+    if STRESS_TEST:
         import random
         network.add_road(0, 0, restrict_to_neighbors=False)
         # Fill entire network grid
@@ -52,7 +65,7 @@ def game_loop(window):
             for c in range(network.w):
                 network.add_road(r, c, restrict_to_neighbors=True)
         # Add a bunch of vehicles
-        for n in range(100):
+        for n in range(1000):
             node = random.choice(list(network.graph.G.nodes))
             network.traffic.add_vehicle(node)
     else:
@@ -60,31 +73,30 @@ def game_loop(window):
                          restrict_to_neighbors=False)
 
     while 1:
+        # Get loop time, convert milliseconds to seconds
+        tick = clock.tick(60)/1000
+
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
         process_input(window, network)
 
-        # Set background
-        window.fill((255, 255, 255))
-
-        # Render mouse grid cursor
-        display_tile_cursor(window)
+        # # Render mouse grid cursor
+        # display_tile_cursor(window)
 
         # Step road network one tick
-        network.step()
-
-        # Render road network
-        road_gfx.render_road_network(window, network, edges=True, nodes=True)
+        network.step(tick)
 
         # DEMO
         randomize_vehicle_paths(window, network)
 
         # Update our display
-        pygame.display.update()
+        road_screen.update()
+        rects = road_screen.draw(window)
+        pygame.display.update(rects)
 
 
+# DEMO
 def randomize_vehicle_paths(window, network):
-    # DEMO
     # Send our sim vehicles on random errands
     import random
     if not list(network.graph.G.nodes):
@@ -94,7 +106,6 @@ def randomize_vehicle_paths(window, network):
             random_node = random.choice(list(network.graph.G.nodes))
             path = network.graph.shortest_path(v.last_node, random_node)
             v.set_path(path)
-        road_gfx.render_path(window, v.path)
 
 
 #########
@@ -115,26 +126,28 @@ def process_input(window, network):
 
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
-    r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
+    r, c = input.mouse_coords_to_grid_index(tw, th)
     road_added = network.add_road(r, c)
 
     # DEMO
-    import random
-    if road_added and random.random() < 0.3:
-        node = random.choice(list(network.graph.G.nodes))
-        network.traffic.add_vehicle(node)
+    if not STRESS_TEST:
+        import random
+        if road_added and random.random() < 0.3:
+            node = random.choice(list(network.graph.G.nodes))
+            network.traffic.add_vehicle(node)
 
 
+# BROKEN
 def display_tile_cursor(window):
     """Highlights tile underneath mouse"""
-    r, c = input.mouse_coords_to_grid_index(TILE_WIDTH, TILE_HEIGHT)
-    x = c * TILE_WIDTH
-    y = r * TILE_HEIGHT
-    rect = pygame.Rect(x, y, TILE_WIDTH, TILE_HEIGHT)
+    r, c = input.mouse_coords_to_grid_index(tw, th)
+    x = c * tw
+    y = r * th
+    rect = pygame.Rect(x, y, tw, th)
     pygame.draw.rect(window, (0, 255, 255), rect)
 
 
 if __name__ == "__main__":
-    game_window = init()
-    game_loop(game_window)
+    game_window, clock = init()
+    game_loop(game_window, clock)
     exit()
