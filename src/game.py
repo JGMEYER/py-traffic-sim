@@ -5,6 +5,7 @@ import input
 from road import graphics as road_gfx
 from road.common import TILE_WIDTH as tw, TILE_HEIGHT as th
 from road.network import RoadNetwork
+from settings import GameSettings
 
 GRID_WIDTH = 25
 GRID_HEIGHT = 15
@@ -50,7 +51,11 @@ def game_loop(window, clock):
     """Game loop"""
 
     # Create road network
-    network = RoadNetwork(GRID_WIDTH, GRID_HEIGHT)
+    network = RoadNetwork(
+        GRID_WIDTH,
+        GRID_HEIGHT,
+        vehicle_stop_wait_time=GameSettings.VEHICLE_STOP_WAIT_TIME,
+    )
 
     # Create road screen (for rendering)
     road_screen = road_gfx.RoadScreen(network)

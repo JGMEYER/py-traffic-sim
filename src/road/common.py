@@ -54,6 +54,9 @@ class TileType(IntEnum):
             dirs.append(Direction.LEFT)
         return dirs
 
+    def is_intersection(self):
+        return len(self.segment_directions()) >= 3
+
 
 def grid_index_to_world_coords(r, c, center=False):
     """Convert (row, col) index on the grid to (x, y) coordinate on the world

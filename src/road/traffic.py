@@ -1,7 +1,13 @@
 import numpy as np
 from typing import List, Tuple
 
-from .common import TILE_WIDTH as tw, Update, Updateable
+from .common import (
+    TILE_WIDTH as tw,
+    RoadNodeType,
+    Update,
+    Updateable,
+    world_coords_to_grid_index,
+)
 from .grid import RoadSegmentNode
 
 
@@ -24,10 +30,10 @@ class Traffic(Updateable):
         self.updates.append((Update.ADDED, (v.id, x, y)))
         return v
 
-    def step(self, tick):
+    def step(self, tick, grid, vehicle_stop_wait_time):
         """Step each vehicle in traffic list"""
         for v in self.vehicles:
-            v.step(tick)
+            v.step(tick, grid, vehicle_stop_wait_time)
 
     def get_updates(self) -> List[Tuple[Update, Tuple[int, float, float]]]:
         """Get updates and clear updates queue"""
@@ -56,6 +62,9 @@ class Vehicle():
         # Travel path
         self.path = []
         self.last_node = node
+
+        # Intersection
+        self.wait_time = 0  # sec
 
     def set_path(self, path: List[RoadSegmentNode]):
         """Set travel path for vehicle. This should be a list of nodes where
@@ -89,13 +98,18 @@ class Vehicle():
                                   + max_move_dist * np.array(unit))
         return max_move_dist
 
-    def step(self, tick):
+    def step(self, tick, grid, stop_wait_time):
         """Move a distance based on our speed towards the next node in our
         path, readjusting targets as needed in case we reach them mid-step.
+
+        If a vehicle reaches an intersection, have it momentarily pause at a
+        stop sign.
         """
         remaining_move_dist = self.speed * tick
 
-        while remaining_move_dist > 0:
+        self.wait_time = max(self.wait_time - tick, 0)
+
+        while self.wait_time == 0 and remaining_move_dist > 0:
             if not self.path:
                 return
 
@@ -107,6 +121,14 @@ class Vehicle():
 
             # Target reached!
             if self.world_coords == (t_x, t_y):
+
+                if t_node.node_type == RoadNodeType.ENTER:
+                    r, c = world_coords_to_grid_index(t_x, t_y)
+
+                    # Pause at stop sign
+                    if grid.tile_type(r, c).is_intersection():
+                        self.wait_time = stop_wait_time
+
                 self.last_node = self.path.pop(0)
 
             remaining_move_dist -= dist_moved
