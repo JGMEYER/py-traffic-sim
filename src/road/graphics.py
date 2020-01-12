@@ -1,3 +1,4 @@
+import random
 from enum import IntEnum
 from typing import Dict, Tuple
 
@@ -18,11 +19,6 @@ from .grid import RoadSegmentNode
 #############
 # Constants #
 #############
-
-
-class Settings():
-    """Display settings"""
-    DISPLAY_EDGES = 0
 
 
 class Color():
@@ -59,11 +55,16 @@ class RoadScreen(sprite.LayeredDirty):
     Sprites are grouped and layered to match the order of `RoadScreenLayers`.
     """
 
-    def __init__(self, network):
+    def __init__(
+            self, network, *, display_travel_edges, randomize_vehicle_color):
         sprite.LayeredDirty.__init__(self)
         self.w = network.w
         self.h = network.h
         self.network = network
+
+        # Passed Constants
+        self._display_travel_edges = display_travel_edges
+        self._randomize_vehicle_color = randomize_vehicle_color
 
         # Background
         self.bg = BackgroundSprite(tw*self.w, th*self.h)
@@ -104,6 +105,7 @@ class RoadScreen(sprite.LayeredDirty):
         for u_type, (u_node, v_node) in updates:
             if u_type == Update.ADDED:
                 sprite = TravelEdgeSprite(u_node, v_node)
+                sprite.visible = self._display_travel_edges
                 self.edges[(u_node, v_node)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TRAVEL_EDGES)
 
@@ -119,7 +121,9 @@ class RoadScreen(sprite.LayeredDirty):
         # Update vehicles
         for u_type, (id, x, y) in updates:
             if u_type == Update.ADDED:
-                sprite = VehicleSprite(x, y)
+                sprite = VehicleSprite(
+                    x, y, randomize_color=self._randomize_vehicle_color
+                )
                 self.vehicles[id] = sprite
                 self.add(sprite, layer=RoadScreenLayers.VEHICLES)
 
@@ -200,7 +204,7 @@ class TravelEdgeSprite(sprite.DirtySprite):
 
         # Required attributes to add to LayeredDirty
         self.dirty = 1
-        self.visible = Settings.DISPLAY_EDGES  # bit of a hack for now
+        self.visible = 1
         self.blendmode = 0
 
     def _image(self, node_u, node_v):
@@ -235,21 +239,23 @@ class VehicleSprite(sprite.DirtySprite):
 
     RADIUS = 4
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, randomize_color=False):
         sprite.DirtySprite.__init__(self)
 
-        self.image, self.rect = self._image(x, y)
+        self.image, self.rect = self._image(x, y, randomize_color)
 
         # Required attributes to add to LayeredDirty
         self.dirty = 1
         self.visible = 1
         self.blendmode = 0
 
-    def _image(self, x, y):
+    def _image(self, x, y, randomize_color):
         """Create vehicle image"""
         image = pygame.Surface([self.RADIUS*2+1, self.RADIUS*2+1])
-        pygame.draw.circle(image, Color.VEHICLE_DEFAULT,
-                           (self.RADIUS, self.RADIUS),
+
+        color = (random_color(150, 255) if randomize_color
+                 else Color.VEHICLE_DEFAULT)
+        pygame.draw.circle(image, color, (self.RADIUS, self.RADIUS),
                            radius=self.RADIUS)
 
         rect = image.get_rect()
@@ -261,6 +267,14 @@ class VehicleSprite(sprite.DirtySprite):
         """Update vehicle location"""
         self.rect.x, self.rect.y = x-self.RADIUS, y-self.RADIUS
         self.dirty = 1
+
+
+def random_color(rgb_min, rgb_max):
+    """Generate random color with each rgb channel between min/max range"""
+    r = random.randint(rgb_min, rgb_max)
+    g = random.randint(rgb_min, rgb_max)
+    b = random.randint(rgb_min, rgb_max)
+    return (r, g, b)
 
 
 ##############

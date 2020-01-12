@@ -58,7 +58,11 @@ def game_loop(window, clock):
     )
 
     # Create road screen (for rendering)
-    road_screen = road_gfx.RoadScreen(network)
+    road_screen = road_gfx.RoadScreen(
+        network,
+        display_travel_edges=GameSettings.DISPLAY_TRAVEL_EDGES,
+        randomize_vehicle_color=GameSettings.RANDOMIZE_VEHICLE_COLOR,
+    )
     road_screen.clear(window, road_screen.bg.image)
 
     # DEMO
