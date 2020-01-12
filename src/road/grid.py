@@ -276,16 +276,20 @@ class TravelGraph(Updateable):
         self.updates = []
 
     def _add_edge(self, u_node, v_node):
-        """Add edge. This should be called instead of removing from the graph
+        """Add edge. This should be called instead of adding to the graph
         directly."""
-        self.G.add_edge(u_node, v_node)
-        self.updates.append((Update.ADDED, (u_node, v_node)))
+        # Only post update if change made
+        if not self.G.has_edge(u_node, v_node):
+            self.updates.append((Update.ADDED, (u_node, v_node)))
+            self.G.add_edge(u_node, v_node)
 
     def _remove_edge(self, u_node, v_node):
         """Remove edge. This should be called instead of removing from the
         graph directly."""
-        self.G.remove_edge(u_node, v_node)
-        self.updates.append((Update.REMOVED, (u_node, v_node)))
+        # Only post update if change made
+        if self.G.has_edge(u_node, v_node):
+            self.updates.append((Update.REMOVED, (u_node, v_node)))
+            self.G.remove_edge(u_node, v_node)
 
     def register_tile_intersection(self, r, c, tile_type,
                                    nbrs: Dict[Direction, Tuple[Tuple[int, int],
