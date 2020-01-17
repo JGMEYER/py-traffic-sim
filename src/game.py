@@ -14,6 +14,12 @@ GRID_HEIGHT = 15
 WINDOW_WIDTH = tw * GRID_WIDTH
 WINDOW_HEIGHT = th * GRID_HEIGHT
 
+"""
+This is the main file for game logic. Code here may be messy and break good
+practices, like variable encapsulation, in favor of fast iteration while
+testing.
+"""
+
 
 def init():
     """Initialize game window"""
@@ -111,9 +117,9 @@ def randomize_vehicle_paths(window, network):
     if not list(network.graph.G.nodes):
         return
     for v in network.traffic.vehicles:
-        if not v.path:
+        if not v._path:
             random_node = random.choice(list(network.graph.G.nodes))
-            path = network.graph.shortest_path(v.last_node, random_node)
+            path = network.graph.shortest_path(v._last_t_node, random_node)
             v.set_path(path)
 
 
