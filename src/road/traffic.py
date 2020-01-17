@@ -54,7 +54,7 @@ class Vehicle():
     def __init__(self, id, node: RoadSegmentNode):
         # Attributes
         self.id = id
-        self.speed = 1 * tw  # WARNING: could have undesirable behavior
+        self.vehicle_speed = 1 # Vehicle speed irrespective of the tile size
 
         # Location
         self.world_coords = node.world_coords
@@ -65,6 +65,21 @@ class Vehicle():
 
         # Intersection
         self.wait_time = 0  # sec
+
+    @property
+    def speed(self):
+        """
+        Returns the speed of the vehicle in terms of tiles traveled
+        """
+        return self.vehicle_speed * tw
+    
+    @speed.setter
+    def speed(self, value):
+        """Sets the vehicle speed. Expects a value in terms of tile size"""
+        if isinstance(value, int):
+            self.vehicle_speed = value // tw # Floored for int
+        else:
+            raise TypeError("Value must me int not {}".format(type(value)))
 
     def set_path(self, path: List[RoadSegmentNode]):
         """Set travel path for vehicle. This should be a list of nodes where
