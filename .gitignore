@@ -1,5 +1,6 @@
 # Project
 .DS_Store
+.vscode
 media/
 program*.prof
 
