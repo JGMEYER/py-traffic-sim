@@ -25,19 +25,20 @@ class LinearTrajectory(Trajectory):
     """Trajectory that moves a point linearly towards a target point."""
 
     def __init__(self, start_x, start_y, end_x, end_y):
-        self.cur_x, self.cur_y = start_x, start_y
-        self.end_x, self.end_y = end_x, end_y
+        self._cur_x, self._cur_y = start_x, start_y
+        self._end_x, self._end_y = end_x, end_y
 
     def move(self, max_move_dist) -> (Tuple[float, float], float):
         """See parent method for desc."""
-        vector = np.array([self.end_x - self.cur_x, self.end_y - self.cur_y])
+        vector = np.array([self._end_x - self._cur_x,
+                           self._end_y - self._cur_y])
         norm = np.linalg.norm(vector)
 
         # Target reached
         if max_move_dist >= norm:
-            return (self.end_x, self.end_y), max_move_dist - norm
+            return (self._end_x, self._end_y), max_move_dist - norm
 
         unit = vector/norm
-        self.cur_x, self.cur_y = tuple(np.array([self.cur_x, self.cur_y])
-                                       + max_move_dist * np.array(unit))
-        return (self.cur_x, self.cur_y), max_move_dist
+        self._cur_x, self._cur_y = tuple(np.array([self._cur_x, self._cur_y])
+                                         + max_move_dist * np.array(unit))
+        return (self._cur_x, self._cur_y), max_move_dist

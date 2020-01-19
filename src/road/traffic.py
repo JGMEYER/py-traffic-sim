@@ -92,7 +92,7 @@ class Vehicle():
         return moved_dist
 
     def _has_target(self):
-        """Vehicle has a target node."""
+        """Vehicle has a target node and trajectory."""
         return self._t_node is not None and self._trajectory is not None
 
     def _clear_target(self):
@@ -103,8 +103,10 @@ class Vehicle():
     def _set_target(self):
         """Set Vehicle target node and trajectory."""
         self._t_node = self._path[0]
-        self._trajectory = pathing.LinearTrajectory(*self._world_coords,
-                                                    *self._t_node.world_coords)
+
+        trajectory = pathing.LinearTrajectory(*self._world_coords,
+                                              *self._t_node.world_coords)
+        self._trajectory = trajectory
 
     def step(self, tick, grid, stop_wait_time):
         """Move a distance based on our speed towards the next node in our
