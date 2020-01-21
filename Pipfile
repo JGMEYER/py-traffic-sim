@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 snakeviz = "*"
+pytest = "*"
 
 [packages]
 pygame = "==2.0.0.dev4"

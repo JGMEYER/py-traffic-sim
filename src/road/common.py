@@ -55,6 +55,7 @@ class TileType(IntEnum):
         return dirs
 
     def is_intersection(self):
+        """Returns if True if TileType is an intersection"""
         return len(self.segment_directions()) >= 3
 
 

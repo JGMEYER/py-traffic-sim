@@ -61,6 +61,7 @@ def game_loop(window, clock):
         GRID_WIDTH,
         GRID_HEIGHT,
         vehicle_stop_wait_time=GameSettings.VEHICLE_STOP_WAIT_TIME,
+        intersection_clear_time=GameSettings.INTERSECTION_CLEAR_TIME,
     )
 
     # Create road screen (for rendering)
