@@ -61,6 +61,7 @@ def game_loop(window, clock):
         GRID_WIDTH,
         GRID_HEIGHT,
         vehicle_stop_wait_time=GameSettings.VEHICLE_STOP_WAIT_TIME,
+        intersection_clear_time=GameSettings.INTERSECTION_CLEAR_TIME,
     )
 
     # Create road screen (for rendering)
@@ -147,7 +148,7 @@ def process_mouse_button_down(window, network):
     # DEMO
     if not STRESS_TEST:
         import random
-        if road_added and random.random() < 0.3:
+        if road_added and random.random() < 0.5:
             node = random.choice(list(network.graph.G.nodes))
             network.traffic.add_vehicle(node)
 

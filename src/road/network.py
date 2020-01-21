@@ -7,12 +7,14 @@ class RoadNetwork():
     road network.
     """
 
-    def __init__(self, w, h, *, vehicle_stop_wait_time):
+    def __init__(self, w, h,
+                 *, vehicle_stop_wait_time, intersection_clear_time):
         self.w = w
         self.h = h
 
         # Passed Constants
         self.VEHICLE_STOP_WAIT_TIME = vehicle_stop_wait_time
+        self.INTERSECTION_CLEAR_TIME = intersection_clear_time
 
         # Network components
         self.grid = TileGrid(w, h)
@@ -34,4 +36,5 @@ class RoadNetwork():
 
     def step(self, tick):
         """Step the network by some amount of ticks"""
-        self.traffic.step(tick, self.grid, self.VEHICLE_STOP_WAIT_TIME)
+        self.traffic.step(tick, self.grid, self.VEHICLE_STOP_WAIT_TIME,
+                          self.INTERSECTION_CLEAR_TIME)

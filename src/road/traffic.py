@@ -1,7 +1,9 @@
-from typing import List, Tuple
+from collections import deque
+from typing import Dict, List, Tuple
 
 from .common import (
     TILE_WIDTH as tw,
+    Direction,
     RoadNodeType,
     Update,
     Updateable,
@@ -20,6 +22,7 @@ class Traffic(Updateable):
     def __init__(self):
         self.vehicles = []
         self.updates = []
+        self.inscts: Dict(Tuple(int, int), Intersection) = {}  # (r, c): insct
 
     def add_vehicle(self, node: RoadSegmentNode):
         """Add vehicle to traffic list"""
@@ -30,10 +33,28 @@ class Traffic(Updateable):
         self.updates.append((Update.ADDED, (v._id, x, y)))
         return v
 
-    def step(self, tick, grid, vehicle_stop_wait_time):
+    def step(self, tick, grid, vehicle_stop_wait_time,
+             intersection_clear_time):
         """Step each vehicle in traffic list"""
+        for insct in self.inscts.values():
+            insct.step(tick, self.vehicles, vehicle_stop_wait_time,
+                       intersection_clear_time)
+
         for v in self.vehicles:
-            v.step(tick, grid, vehicle_stop_wait_time)
+            entering_insct, segment_dir = v.step(tick, grid,
+                                                 vehicle_stop_wait_time)
+            if entering_insct:
+                self._add_vehicle_to_insct(v, segment_dir,
+                                           vehicle_stop_wait_time)
+
+    def _add_vehicle_to_insct(self, vehicle, drctn: Direction,
+                              vehicle_stop_wait_time):
+        r, c = world_coords_to_grid_index(*vehicle._world_coords)
+
+        if not self.inscts.get((r, c)):
+            self.inscts[(r, c)] = Intersection()
+
+        self.inscts[(r, c)].enqueue(vehicle, drctn, vehicle_stop_wait_time)
 
     def get_updates(self) -> List[Tuple[Update, Tuple[int, float, float]]]:
         """Get updates and clear updates queue"""
@@ -46,6 +67,81 @@ class Traffic(Updateable):
 
         self.updates = []
         return updates
+
+
+class Intersection():
+    """An Intersection construct that determines how Vehicles pass between
+    intersection edge nodes in the TravelGraph.
+
+    Behaves as if all segment directions have a stop sign.
+    """
+
+    def __init__(self):
+        self.queues: Dict(Direction, int) = {
+            Direction.UP: [],  # list of vehicle ids
+            Direction.RIGHT: [],
+            Direction.DOWN: [],
+            Direction.LEFT: []
+        }
+        self.wait_timers: Dict(Direction, float) = {
+            Direction.UP: 0,
+            Direction.RIGHT: 0,
+            Direction.DOWN: 0,
+            Direction.LEFT: 0,
+        }
+
+        self._last_dequeue_dir = Direction.LEFT  # so UP goes first
+
+        # Timer to give vehicle in the middle of the intersection time to leave
+        # the intersection before dequeuing the next vehicle in the
+        # intersection.
+        self._clear_timer = 0
+
+    def enqueue(self, vehicle, drctn: Direction, vehicle_stop_wait_time):
+        """Add vehicle to direction queue"""
+        if not self.queues[drctn]:
+            self.wait_timers[drctn] = vehicle_stop_wait_time
+        self.queues[drctn].append(vehicle._id)
+        vehicle._waiting_at_insct = True
+
+    def _dequeue(self, drctn: Direction, vehicles, vehicle_stop_wait_time):
+        """Remove vehicle from direction queue"""
+        vehicle_id = self.queues[drctn].pop(0)
+        vehicles[vehicle_id]._waiting_at_insct = False
+
+        if self.queues[drctn]:
+            self.wait_timers[drctn] = vehicle_stop_wait_time
+
+    def step(self, tick, vehicles, vehicle_stop_wait_time,
+             intersection_clear_time):
+        """Release vehicles from their queues, when possible"""
+
+        for direction, timer in self.wait_timers.items():
+            self.wait_timers[direction] = max(timer - tick, 0)
+
+        self._clear_timer = max(self._clear_timer - tick, 0)
+        if self._clear_timer > 0:
+            return
+
+        # Vehicles should enter the intersection in a clockwise rotation.
+        # Determine order of directions to let out by rotating our list.
+        #     Example: DOWN let out last.
+        #       [UP, RIGHT, DOWN, LEFT] -> [LEFT, UP, RIGHT, DOWN]
+        #     Example: RIGHT let out last.
+        #       [UP, RIGHT, DOWN, LEFT] -> [DOWN, LEFT, UP, RIGHT]
+        dir_order = deque([Direction.UP, Direction.RIGHT, Direction.DOWN,
+                           Direction.LEFT])
+        dir_order.rotate(-1 * (self._last_dequeue_dir + 1))
+
+        for drctn in dir_order:
+            if self.wait_timers[drctn] > 0:
+                continue
+
+            if self.queues[drctn]:
+                self._dequeue(drctn, vehicles, vehicle_stop_wait_time)
+                self._last_dequeue_dir = drctn
+                self._clear_timer = intersection_clear_time
+                break
 
 
 class Vehicle():
@@ -67,7 +163,7 @@ class Vehicle():
         self._trajectory = None
 
         # Intersection
-        self.wait_time = 0  # sec
+        self._waiting_at_insct = False
 
     def set_path(self, path: List[RoadSegmentNode]):
         """Set travel path for vehicle. This should be a list of nodes where
@@ -108,20 +204,19 @@ class Vehicle():
                                               *self._t_node.world_coords)
         self._trajectory = trajectory
 
-    def step(self, tick, grid, stop_wait_time):
+    def step(self, tick, grid, stop_wait_time) -> (bool, Direction):
         """Move a distance based on our speed towards the next node in our
         path, readjusting targets as needed in case we reach them mid-step.
 
-        If a vehicle reaches an intersection, have it momentarily pause at a
-        stop sign.
+        Notify if the vehicle is entering an intersection, to be queued.
+
+        returns: (entering_insct, segment_dir)
         """
         remaining_move_dist = self.speed * tick
 
-        self.wait_time = max(self.wait_time - tick, 0)
-
-        while self.wait_time == 0 and remaining_move_dist > 0:
+        while not self._waiting_at_insct and remaining_move_dist > 0:
             if not self._path:
-                return
+                return False, None
 
             if not self._has_target():
                 self._set_target()
@@ -129,18 +224,12 @@ class Vehicle():
             # Attempt move towards target
             dist_moved = self._move_towards_target(self._trajectory,
                                                    remaining_move_dist)
+            remaining_move_dist -= dist_moved
+
+            entering_insct = self.entering_insct(grid)
 
             # Target reached
             if self._world_coords == self._t_node.world_coords:
-
-                if self._t_node.node_type == RoadNodeType.ENTER:
-                    r, c = world_coords_to_grid_index(
-                                   *self._t_node.world_coords)
-
-                    # Pause at stop sign
-                    if grid.tile_type(r, c).is_intersection():
-                        self.wait_time = stop_wait_time
-
                 self._last_t_node = self._path.pop(0)
 
                 if self._path:
@@ -148,4 +237,20 @@ class Vehicle():
                 else:
                     self._clear_target()
 
-            remaining_move_dist -= dist_moved
+            # Target was an intersection
+            if entering_insct:
+                return True, self._last_t_node.dir
+
+        return False, None
+
+    def entering_insct(self, grid):
+        """Returns True if Vehicle at the edge of an intersection, waiting to
+        enter.
+        """
+        if (self._world_coords == self._t_node.world_coords
+                and self._t_node.node_type == RoadNodeType.ENTER):
+
+            r, c = world_coords_to_grid_index(*self._world_coords)
+            return grid.tile_type(r, c).is_intersection()
+
+        return False
