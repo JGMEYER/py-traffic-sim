@@ -9,6 +9,24 @@ A program to simulate vehicle traffic patterns using Python and pygame.
 1. Install [pipenv](https://pipenv-fork.readthedocs.io/en/latest/basics.html).
 2. From the project directory run: $ `pipenv run python src/game.py`
 
+## Changing settings
+
+You can modify game rules and debug options in `GameSettings` in `src/settings.py`
+
+## Gameplay basics
+
+In the game window, you'll see a single black square representing the "root" road segment. Click and drag beside this element to begin building a road. The program will randomly populate vehicles as segments are added.
+
+For now, all new road segments need to be built from the existing road segment.
+
+Example road:
+
+![Example Road](/images/road-example.png)
+
+Example road with `GameSettings.DISPLAY_TRAVEL_EDGES` enabled:
+
+![Example Travel Edges](/images/travel-edges-example.png)
+
 ## Vision
 
 This project was designed as a fun way to learn how to architect graphical Python applications and explore how bad intersection traffic rules can cause traffic problems elsewhere in a street grid.
