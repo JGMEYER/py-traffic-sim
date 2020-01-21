@@ -102,14 +102,12 @@ class Intersection():
         if not self.queues[drctn]:
             self.wait_timers[drctn] = vehicle_stop_wait_time
         self.queues[drctn].append(vehicle._id)
-        vehicle._waiting_at_intersection(True)
+        vehicle._waiting_at_insct = True
 
     def _dequeue(self, drctn: Direction, vehicles, vehicle_stop_wait_time):
         """Remove vehicle from direction queue"""
         vehicle_id = self.queues[drctn].pop(0)
-        vehicles[vehicle_id]._waiting_at_intersection(False)
-
-        print(self.queues[drctn])
+        vehicles[vehicle_id]._waiting_at_insct = False
 
         if self.queues[drctn]:
             self.wait_timers[drctn] = vehicle_stop_wait_time
@@ -117,8 +115,6 @@ class Intersection():
     def step(self, tick, vehicles, vehicle_stop_wait_time,
              intersection_clear_time):
         """Release vehicles from their queues, when possible"""
-        print(self.queues)
-        print(self.wait_timers)
 
         for direction, timer in self.wait_timers.items():
             self.wait_timers[direction] = max(timer - tick, 0)
@@ -167,7 +163,7 @@ class Vehicle():
         self._trajectory = None
 
         # Intersection
-        self._waiting = False
+        self._waiting_at_insct = False
 
     def set_path(self, path: List[RoadSegmentNode]):
         """Set travel path for vehicle. This should be a list of nodes where
@@ -218,7 +214,7 @@ class Vehicle():
         """
         remaining_move_dist = self.speed * tick
 
-        while not self._waiting and remaining_move_dist > 0:
+        while not self._waiting_at_insct and remaining_move_dist > 0:
             if not self._path:
                 return False, None
 
@@ -228,13 +224,12 @@ class Vehicle():
             # Attempt move towards target
             dist_moved = self._move_towards_target(self._trajectory,
                                                    remaining_move_dist)
-
             remaining_move_dist -= dist_moved
 
+            entering_insct = self.entering_insct(grid)
+
             # Target reached
-            if self.entering_intersection(grid):
-                return True, self._t_node.dir
-            elif self._world_coords == self._t_node.world_coords:
+            if self._world_coords == self._t_node.world_coords:
                 self._last_t_node = self._path.pop(0)
 
                 if self._path:
@@ -242,15 +237,13 @@ class Vehicle():
                 else:
                     self._clear_target()
 
+            # Target was an intersection
+            if entering_insct:
+                return True, self._last_t_node.dir
+
         return False, None
 
-    def _waiting_at_intersection(self, waiting: bool):
-        self._waiting = waiting
-
-    def is_waiting_at_intersection(self):
-        return self._waiting
-
-    def entering_intersection(self, grid):
+    def entering_insct(self, grid):
         """Returns True if Vehicle at the edge of an intersection, waiting to
         enter.
         """

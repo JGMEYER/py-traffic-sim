@@ -3,8 +3,8 @@ class GameSettings():
     """Game settings"""
 
     # Traffic
-    VEHICLE_STOP_WAIT_TIME = 2  # sec
-    INTERSECTION_CLEAR_TIME = 2  # sec
+    VEHICLE_STOP_WAIT_TIME = 0.5  # sec
+    INTERSECTION_CLEAR_TIME = 0.35  # sec
 
     # Graphics
     DISPLAY_TRAVEL_EDGES = True

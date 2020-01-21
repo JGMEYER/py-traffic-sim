@@ -148,7 +148,7 @@ def process_mouse_button_down(window, network):
     # DEMO
     if not STRESS_TEST:
         import random
-        if road_added and random.random() < 0.3:
+        if road_added and random.random() < 0.5:
             node = random.choice(list(network.graph.G.nodes))
             network.traffic.add_vehicle(node)
 

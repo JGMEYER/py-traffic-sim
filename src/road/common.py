@@ -69,10 +69,17 @@ def grid_index_to_world_coords(r, c, center=False):
         return (c*TILE_WIDTH, r*TILE_HEIGHT)
 
 
-def world_coords_to_grid_index(x, y):
+def world_coords_to_grid_index(x: float, y: float):
     """Convert (x, y) coordinate on the world plane to the corresponding
     (row, col) index on the grid.
     """
+    # Elsewhere in the code we may use numpy to perform arithmetic. Problem is,
+    # numpy.float64 values don't cast well to int and will ignore floor
+    # division, even when explicitly specified with "//". This is a hack
+    # solution to get around this which hopefully shouldn't have negative
+    # consequences with how this function is used. Time will tell.
+    x, y = int(x), int(y)
+
     return (y//TILE_HEIGHT, x//TILE_WIDTH)
 
 
