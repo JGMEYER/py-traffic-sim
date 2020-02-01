@@ -9,3 +9,7 @@ class GameSettings():
     # Graphics
     DISPLAY_TRAVEL_EDGES = True
     RANDOMIZE_VEHICLE_COLOR = True
+
+    # Game window size
+    GRID_WIDTH = 25
+    GRID_HEIGHT = 15

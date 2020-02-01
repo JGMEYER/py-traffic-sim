@@ -7,12 +7,9 @@ from road.common import TILE_WIDTH as tw, TILE_HEIGHT as th
 from road.network import RoadNetwork
 from settings import GameSettings
 
-GRID_WIDTH = 25
-GRID_HEIGHT = 15
-
 # Create width and height constants
-WINDOW_WIDTH = tw * GRID_WIDTH
-WINDOW_HEIGHT = th * GRID_HEIGHT
+WINDOW_WIDTH = tw * GameSettings.GRID_WIDTH
+WINDOW_HEIGHT = th * GameSettings.GRID_HEIGHT
 
 """
 This is the main file for game logic. Code here may be messy and break good
@@ -58,8 +55,8 @@ def game_loop(window, clock):
 
     # Create road network
     network = RoadNetwork(
-        GRID_WIDTH,
-        GRID_HEIGHT,
+        GameSettings.GRID_WIDTH,
+        GameSettings.GRID_HEIGHT,
         vehicle_stop_wait_time=GameSettings.VEHICLE_STOP_WAIT_TIME,
         intersection_clear_time=GameSettings.INTERSECTION_CLEAR_TIME,
     )
