@@ -52,6 +52,7 @@ While no feature or timeline is set in stone, here is a tentative sense of direc
 
 - **Vehicle objectives:** Vehicles should be given randomized, but logical objectives to simulate realistic patterns. e.g. car leaves house to go to grocery store, car returns back home.
 - **Roadside buildings:** Buildings should be placeable as objectives along the roadside for Vehicles to travel to.
+- **Load / Save:** Players should be able to save and load map files.
 
 ### v0.3 - Timed traffic lights
 
