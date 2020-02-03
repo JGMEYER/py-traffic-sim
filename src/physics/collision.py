@@ -1,11 +1,22 @@
+from abc import ABC, abstractmethod
 from typing import Dict, Set, Tuple
 
 from pygame import Rect
 
 
+class Collidable(ABC):
+    """A class that can collide with other objects."""
+
+    @abstractmethod
+    def get_collision_rect() -> Rect:
+        """Return collision box for the object as a Rect."""
+        raise NotImplementedError
+
+
 class CollisionTileGrid():
-    """A grid of collision objects with locations and dimensions for
-    efficiently determining collisions between the objects."""
+    """A grid of collision objects for efficiently determining collisions
+    between the objects.
+    """
 
     def __init__(self, cgrid_width, cgrid_height, ctile_width, ctile_height):
         self.ctg_gw = cgrid_width

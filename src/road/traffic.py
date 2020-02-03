@@ -1,6 +1,8 @@
 from collections import deque
 from typing import Dict, List, Tuple
 
+from pygame import Rect
+
 from .common import (
     Direction,
     RoadNodeType,
@@ -10,6 +12,7 @@ from .common import (
 )
 from .grid import RoadSegmentNode
 from physics import pathing
+from physics.collision import Collidable, CollisionTileGrid
 
 
 class Traffic(Updateable):
@@ -18,11 +21,14 @@ class Traffic(Updateable):
     # Counter to track next vehicle id
     vehicle_ids = -1
 
-    def __init__(self, config):
+    def __init__(self, config, collision_grid: CollisionTileGrid):
         self.config = config
 
         self.vehicles = []
         self.updates = []
+
+        self.collision_grid = collision_grid
+
         self.inscts: Dict(Tuple(int, int), Intersection) = {}  # (r, c): insct
 
     def add_vehicle(self, node: RoadSegmentNode):
@@ -41,6 +47,13 @@ class Traffic(Updateable):
 
         for v in self.vehicles:
             entering_insct, segment_dir = v.step(tick, grid)
+
+            v_c_obj = v.get_collision_rect()
+            self.collision_grid.update_object(v._id, v_c_obj)
+            # TODO send new form of update to show collisions graphically
+            if self.collision_grid.has_collision(v._id):
+                print(f"{v._id} has collision!")
+
             if entering_insct:
                 self._add_vehicle_to_insct(v, segment_dir)
 
@@ -48,7 +61,7 @@ class Traffic(Updateable):
         r, c = world_coords_to_grid_index(
             self.config.TILE_WIDTH,
             self.config.TILE_HEIGHT,
-            *vehicle._world_coords
+            *vehicle._world_coords,
         )
 
         if not self.inscts.get((r, c)):
@@ -146,8 +159,11 @@ class Intersection:
                 break
 
 
-class Vehicle:
+class Vehicle(Collidable):
     """A Vehicle that travels along the TravelGraph"""
+
+    # TODO warning: for now this must be kept in sync with VehicleSprite.RADIUS
+    RADIUS = 4
 
     def __init__(self, config, id, node: RoadSegmentNode):
         self.config = config
@@ -263,8 +279,15 @@ class Vehicle:
             r, c = world_coords_to_grid_index(
                 self.config.TILE_WIDTH,
                 self.config.TILE_HEIGHT,
-                *self._world_coords
+                *self._world_coords,
             )
             return grid.tile_type(r, c).is_intersection()
 
         return False
+
+    def get_collision_rect(self) -> Rect:
+        """Return collision box for the Vehicle as a Rect."""
+        x, y = self._world_coords
+        return Rect(
+            x - self.RADIUS, y - self.RADIUS, 2 * self.RADIUS, 2 * self.RADIUS
+        )
