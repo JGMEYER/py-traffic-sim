@@ -48,7 +48,6 @@ def test__get_occupied_tiles():
 
 
 def test_update_object():
-    # TODO assert self.objs
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     # Add new obj 1
@@ -113,7 +112,6 @@ def test_update_object():
 
 
 def test_remove_object():
-    # TODO assert self.objs
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     with pytest.raises(KeyError):
@@ -127,6 +125,7 @@ def test_remove_object():
     ctg.remove_object(1)
     ctg.remove_object(2)
 
+    _assert_objs(ctg.objs, {})
     assert ctg.obj2tiles == {}
     assert ctg.tile2objs == {
                                 (0, 0): set(),
