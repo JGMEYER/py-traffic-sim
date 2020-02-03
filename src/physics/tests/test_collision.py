@@ -1,11 +1,13 @@
 import pytest
+from pygame import Rect
 
 from physics.collision import CollisionTileGrid
 
 
 def test__get_corners():
     ctg = CollisionTileGrid(3, 3, 2, 2)
-    corners = ctg._get_corners(*(1, 1), *(2, 2))
+    c_obj = Rect((1, 1), (2, 2))
+    corners = ctg._get_corners(c_obj)
     assert corners == [(1, 1), (3, 1), (3, 3), (1, 3)]
 
 
@@ -13,17 +15,17 @@ def test__get_occupied_tiles():
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     # Obj with dimensions <= tile dimensions
-    tiles = ctg._get_occupied_tiles(*(1, 1), *(2, 2))
+    tiles = ctg._get_occupied_tiles(Rect((1, 1), (2, 2)))
     assert tiles == {(0, 0), (0, 1), (1, 1), (1, 0)}
 
     # Obj with dimensions > tile dimensions
-    tiles = ctg._get_occupied_tiles(*(1, 1), *(4, 4))
+    tiles = ctg._get_occupied_tiles(Rect((1, 1), (4, 4)))
     assert tiles == {(0, 0), (0, 1), (0, 2),
                      (1, 0), (1, 1), (1, 2),
                      (2, 0), (2, 1), (2, 2)}
 
     # Rectangular obj
-    tiles = ctg._get_occupied_tiles(*(3, 1), *(2, 4))
+    tiles = ctg._get_occupied_tiles(Rect((3, 1), (2, 4)))
     assert tiles == {(0, 1), (0, 2),
                      (1, 1), (1, 2),
                      (2, 1), (2, 2)}
@@ -33,7 +35,7 @@ def test_update_object():
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     # Add new obj 1
-    ctg.update_object(1, *(1, 1), *(2, 2))
+    ctg.update_object(1, Rect((1, 1), (2, 2)))
     assert ctg.obj2tiles == {1: {(0, 0), (0, 1), (1, 1), (1, 0)}}
     assert ctg.tile2objs == {
                                 (0, 0): {1},
@@ -48,7 +50,7 @@ def test_update_object():
                             }
 
     # Add new obj 2
-    ctg.update_object(2, *(2, 2), *(1, 1))
+    ctg.update_object(2, Rect((2, 2), (1, 1)))
     assert ctg.obj2tiles == {
                                 1: {(0, 0), (0, 1), (1, 1), (1, 0)},
                                 2: {(1, 1)},
@@ -66,7 +68,7 @@ def test_update_object():
                             }
 
     # Move obj 2
-    ctg.update_object(2, *(1, 1), *(1, 1))
+    ctg.update_object(2, Rect((1, 1), (1, 1)))
     assert ctg.obj2tiles == {
                                 1: {(0, 0), (0, 1), (1, 1), (1, 0)},
                                 2: {(0, 0), (0, 1), (1, 1), (1, 0)},
@@ -92,8 +94,8 @@ def test_remove_object():
     with pytest.raises(KeyError):
         ctg.remove_object(2)
 
-    ctg.update_object(1, *(1, 1), *(2, 2))
-    ctg.update_object(2, *(2, 2), *(1, 1))
+    ctg.update_object(1, Rect((1, 1), (2, 2)))
+    ctg.update_object(2, Rect((2, 2), (1, 1)))
 
     ctg.remove_object(1)
     ctg.remove_object(2)
@@ -120,14 +122,14 @@ def test_remove_object():
 def test__nearby_objects():
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
-    ctg.update_object(1, *(1, 1), *(2, 2))
-    ctg.update_object(2, *(2, 2), *(1, 1))
+    ctg.update_object(1, Rect((1, 1), (2, 2)))
+    ctg.update_object(2, Rect((2, 2), (1, 1)))
 
     assert ctg._nearby_objects(1) == {2}
     assert ctg._nearby_objects(2) == {1}
 
-    ctg.update_object(3, *(0, 0), *(2, 2))
-    ctg.update_object(4, *(4, 4), *(1, 1))
+    ctg.update_object(3, Rect((0, 0), (2, 2)))
+    ctg.update_object(4, Rect((4, 4), (1, 1)))
 
     assert ctg._nearby_objects(1) == {2, 3}
     assert ctg._nearby_objects(2) == {1, 3}

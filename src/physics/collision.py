@@ -1,5 +1,7 @@
 from typing import Dict, Set, Tuple
 
+from pygame import Rect
+
 
 class CollisionTileGrid():
     """A grid of collision objects with locations and dimensions for
@@ -18,18 +20,20 @@ class CollisionTileGrid():
             for c in range(cgrid_width):
                 self.tile2objs[(r, c)] = set()
 
-    def update_object(self, obj_id, world_x: float, world_y: float, obj_width,
-                      obj_height):
-        """Updates an collision object's location and dimensions within the
+    def update_object(self, obj_id, c_obj: Rect):
+        """Updates a collision object's location and dimensions within the
         collision grid. Creates a new object with the provided obj_id if one
-        does not already exist."""
+        does not already exist.
+
+        Rect x and y coordinates should correspond with world coordinates on
+        the grid.
+        """
         old_tiles = self.obj2tiles.get(obj_id)
         if old_tiles:
             for r, c in old_tiles:
                 self.tile2objs[(r, c)].remove(obj_id)
 
-        new_tiles = self._get_occupied_tiles(world_x, world_y, obj_width,
-                                             obj_height)
+        new_tiles = self._get_occupied_tiles(c_obj)
         for r, c in new_tiles:
             self.tile2objs[(r, c)].add(obj_id)
         self.obj2tiles[obj_id] = new_tiles
@@ -59,19 +63,18 @@ class CollisionTileGrid():
 
         return collision_ids
 
-    def _get_corners(self, world_x, world_y, obj_width, obj_height):
+    def _get_corners(self, c_obj: Rect):
         """Returns corners bounding an object with the provided location and
         dimensions."""
         corners = [
-            (world_x, world_y),  # upper left
-            (world_x + obj_width, world_y),  # upper right
-            (world_x + obj_width, world_y + obj_height),  # bottom right
-            (world_x, world_y + obj_height),  # bottom left
+            (c_obj.x, c_obj.y),  # upper left
+            (c_obj.x + c_obj.width, c_obj.y),  # upper right
+            (c_obj.x + c_obj.width, c_obj.y + c_obj.height),  # bottom right
+            (c_obj.x, c_obj.y + c_obj.height),  # bottom left
         ]
         return corners
 
-    def _get_occupied_tiles(self, world_x: float, world_y: float, obj_width,
-                            obj_height):
+    def _get_occupied_tiles(self, c_obj: Rect):
         """Returns all tiles occupied by an object with the provided location
         and dimensions"""
         tiles = set()
@@ -79,7 +82,7 @@ class CollisionTileGrid():
         rows = set()
         cols = set()
 
-        corners = self._get_corners(world_x, world_y, obj_width, obj_height)
+        corners = self._get_corners(c_obj)
 
         for x, y in corners:
             r, c = self._world_coords_to_tile_index(x, y)
