@@ -13,6 +13,7 @@ class CollisionTileGrid():
         self.ctg_tw = ctile_width
         self.ctg_th = ctile_height
 
+        self.objs: Dict[int, Rect] = {}
         self.obj2tiles: Dict[int, Set[Tuple[int, int]]] = {}
         self.tile2objs: Dict[Tuple[int, int], Set[int]] = {}
 
@@ -28,6 +29,8 @@ class CollisionTileGrid():
         Rect x and y coordinates should correspond with world coordinates on
         the grid.
         """
+        self.objs[obj_id] = c_obj
+
         old_tiles = self.obj2tiles.get(obj_id)
         if old_tiles:
             for r, c in old_tiles:
@@ -44,12 +47,31 @@ class CollisionTileGrid():
         for r, c in tiles:
             self.tile2objs[(r, c)].remove(obj_id)
         del self.obj2tiles[obj_id]
+        del self.objs[obj_id]
 
-    def colliding_objects(self, obj_id):
+    def has_collision(self, obj_id):
+        """Returns True if object is colliding with another object in the grid.
+        """
+        c_obj = self.objs[obj_id]
+
+        for nearby_obj_id in self._nearby_objects(obj_id):
+            nearby_obj = self.objs[nearby_obj_id]
+            if c_obj.colliderect(nearby_obj):
+                return True
+
+        return False
+
+    def colliding_object_ids(self, obj_id):
         """Returns ids of objects colliding with the provided object."""
-        # TODO -- return list of objects colliding with current object
-        #      -- use nearby_objects to limit search
-        pass
+        colliding_obj_ids = set()
+        c_obj = self.objs[obj_id]
+
+        for nearby_obj_id in self._nearby_objects(obj_id):
+            nearby_obj = self.objs[nearby_obj_id]
+            if c_obj.colliderect(nearby_obj):
+                colliding_obj_ids.add(nearby_obj_id)
+
+        return colliding_obj_ids
 
     def _nearby_objects(self, obj_id):
         """Returns ids of objects sharing tiles with object of provided id."""
@@ -64,15 +86,14 @@ class CollisionTileGrid():
         return collision_ids
 
     def _get_corners(self, c_obj: Rect):
-        """Returns corners bounding an object with the provided location and
-        dimensions."""
-        corners = [
-            (c_obj.x, c_obj.y),  # upper left
-            (c_obj.x + c_obj.width, c_obj.y),  # upper right
-            (c_obj.x + c_obj.width, c_obj.y + c_obj.height),  # bottom right
-            (c_obj.x, c_obj.y + c_obj.height),  # bottom left
+        """Returns corners bounding the collision object.
+
+        NOTE: If this needs to be reused, we could extend pygame.Rect and add
+        this function to the new class.
+        """
+        return [
+            c_obj.topleft, c_obj.topright, c_obj.bottomright, c_obj.bottomleft,
         ]
-        return corners
 
     def _get_occupied_tiles(self, c_obj: Rect):
         """Returns all tiles occupied by an object with the provided location
@@ -96,8 +117,10 @@ class CollisionTileGrid():
         return tiles
 
     def _world_coords_to_tile_index(self, x: float, y: float):
-        # TODO should this really be here?
         """Convert (x, y) coordinate on the world plane to the corresponding
         (row, col) index on the grid.
+
+        NOTE: If this functionality needs to be reused in this module, consider
+        moving it to a common.py or similar.
         """
         return (y//self.ctg_th, x//self.ctg_tw)

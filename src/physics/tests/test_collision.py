@@ -4,6 +4,22 @@ from pygame import Rect
 from physics.collision import CollisionTileGrid
 
 
+def _rects_equal(a: Rect, b: Rect):
+    return (a.x, a.y, a.w, a.h) == (b.x, b.y, b.w, b.h)
+
+
+def _assert_objs(ctg_objs, expected_objs):
+    assert len(ctg_objs) == len(expected_objs)
+
+    missing_items = {}
+    for k, v in expected_objs.items():
+        if (k not in ctg_objs or
+                not _rects_equal(ctg_objs[k], expected_objs[k])):
+            missing_items[k] = v
+
+    assert not missing_items
+
+
 def test__get_corners():
     ctg = CollisionTileGrid(3, 3, 2, 2)
     c_obj = Rect((1, 1), (2, 2))
@@ -32,10 +48,12 @@ def test__get_occupied_tiles():
 
 
 def test_update_object():
+    # TODO assert self.objs
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     # Add new obj 1
     ctg.update_object(1, Rect((1, 1), (2, 2)))
+    _assert_objs(ctg.objs, {1: Rect((1, 1), (2, 2))})
     assert ctg.obj2tiles == {1: {(0, 0), (0, 1), (1, 1), (1, 0)}}
     assert ctg.tile2objs == {
                                 (0, 0): {1},
@@ -51,6 +69,10 @@ def test_update_object():
 
     # Add new obj 2
     ctg.update_object(2, Rect((2, 2), (1, 1)))
+    _assert_objs(ctg.objs, {
+                               1: Rect((1, 1), (2, 2)),
+                               2: Rect((2, 2), (1, 1)),
+                           })
     assert ctg.obj2tiles == {
                                 1: {(0, 0), (0, 1), (1, 1), (1, 0)},
                                 2: {(1, 1)},
@@ -69,6 +91,10 @@ def test_update_object():
 
     # Move obj 2
     ctg.update_object(2, Rect((1, 1), (1, 1)))
+    _assert_objs(ctg.objs, {
+                               1: Rect((1, 1), (2, 2)),
+                               2: Rect((1, 1), (1, 1)),
+                           })
     assert ctg.obj2tiles == {
                                 1: {(0, 0), (0, 1), (1, 1), (1, 0)},
                                 2: {(0, 0), (0, 1), (1, 1), (1, 0)},
@@ -87,6 +113,7 @@ def test_update_object():
 
 
 def test_remove_object():
+    # TODO assert self.objs
     ctg = CollisionTileGrid(3, 3, 2, 2)
 
     with pytest.raises(KeyError):
@@ -137,6 +164,41 @@ def test__nearby_objects():
     assert ctg._nearby_objects(4) == set()
 
 
-def test_colliding_objects():
-    # TODO implement this
-    pass
+def test_has_collision():
+    ctg = CollisionTileGrid(3, 3, 3, 3)
+
+    ctg.update_object(1, Rect((1, 1), (3, 3)))
+    ctg.update_object(2, Rect((2, 2), (1, 1)))
+    ctg.update_object(3, Rect((5, 2), (3, 5)))
+    ctg.update_object(4, Rect((1, 5), (3, 2)))
+    ctg.update_object(5, Rect((3, 6), (3, 2)))
+    ctg.update_object(6, Rect((5, 0), (3, 1)))
+    ctg.update_object(7, Rect((6, 1), (2, 1)))
+
+    assert ctg.has_collision(1)
+    assert ctg.has_collision(2)
+    assert ctg.has_collision(3)
+    assert ctg.has_collision(4)
+    assert ctg.has_collision(5)
+    assert not ctg.has_collision(6)
+    assert not ctg.has_collision(7)
+
+
+def test_colliding_object_ids():
+    ctg = CollisionTileGrid(3, 3, 3, 3)
+
+    ctg.update_object(1, Rect((1, 1), (3, 3)))
+    ctg.update_object(2, Rect((2, 2), (1, 1)))
+    ctg.update_object(3, Rect((5, 2), (3, 5)))
+    ctg.update_object(4, Rect((1, 5), (3, 2)))
+    ctg.update_object(5, Rect((3, 6), (3, 2)))
+    ctg.update_object(6, Rect((5, 0), (3, 1)))
+    ctg.update_object(7, Rect((6, 1), (2, 1)))
+
+    assert ctg.colliding_object_ids(1) == {2}
+    assert ctg.colliding_object_ids(2) == {1}
+    assert ctg.colliding_object_ids(3) == {5}
+    assert ctg.colliding_object_ids(4) == {5}
+    assert ctg.colliding_object_ids(5) == {3, 4}
+    assert ctg.colliding_object_ids(6) == set()
+    assert ctg.colliding_object_ids(7) == set()
