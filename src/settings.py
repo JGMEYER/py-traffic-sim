@@ -1,5 +1,4 @@
-
-class GameSettings():
+class GameSettings:
     """Game settings"""
 
     # Traffic

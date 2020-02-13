@@ -5,7 +5,6 @@ import numpy as np
 
 
 class Trajectory(ABC):
-
     @abstractmethod
     def move(self, max_move_dist) -> (Tuple[float, float], float):
         """Move the point along the trajectory towards its target by the
@@ -30,15 +29,18 @@ class LinearTrajectory(Trajectory):
 
     def move(self, max_move_dist) -> (Tuple[float, float], float):
         """See parent method for desc."""
-        vector = np.array([self._end_x - self._cur_x,
-                           self._end_y - self._cur_y])
+        vector = np.array(
+            [self._end_x - self._cur_x, self._end_y - self._cur_y]
+        )
         norm = np.linalg.norm(vector)
 
         # Target reached
         if max_move_dist >= norm:
             return (self._end_x, self._end_y), max_move_dist - norm
 
-        unit = vector/norm
-        self._cur_x, self._cur_y = tuple(np.array([self._cur_x, self._cur_y])
-                                         + max_move_dist * np.array(unit))
+        unit = vector / norm
+        self._cur_x, self._cur_y = tuple(
+            np.array([self._cur_x, self._cur_y])
+            + max_move_dist * np.array(unit)
+        )
         return (self._cur_x, self._cur_y), max_move_dist
