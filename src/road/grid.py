@@ -20,6 +20,7 @@ from .common import (
 # Tile Grid #
 #############
 
+
 class TileGrid(Updateable):
     """A 2d grid of all road tiles"""
 
@@ -48,14 +49,14 @@ class TileGrid(Updateable):
         self.update_tile_type(r, c, added=True)
 
         # Update tile types of adjacent tiles
-        if r-1 >= 0:
-            self.update_tile_type(r-1, c)
-        if c+1 < self.w:
-            self.update_tile_type(r, c+1)
-        if r+1 < self.h:
-            self.update_tile_type(r+1, c)
-        if c-1 >= 0:
-            self.update_tile_type(r, c-1)
+        if r - 1 >= 0:
+            self.update_tile_type(r - 1, c)
+        if c + 1 < self.w:
+            self.update_tile_type(r, c + 1)
+        if r + 1 < self.h:
+            self.update_tile_type(r + 1, c)
+        if c - 1 >= 0:
+            self.update_tile_type(r, c - 1)
 
         return True
 
@@ -131,17 +132,17 @@ class TileGrid(Updateable):
         """Get tile metadata of neighbors adjacent to specified tile index"""
         nbrs: Dict[Direction, Tuple[Tuple[int, int], TileType]] = {}
 
-        if r-1 >= 0 and self.tile_type(r-1, c) != TileType.EMPTY:
-            nbrs[Direction.UP] = ((r-1, c), self.tile_type(r-1, c))
+        if r - 1 >= 0 and self.tile_type(r - 1, c) != TileType.EMPTY:
+            nbrs[Direction.UP] = ((r - 1, c), self.tile_type(r - 1, c))
 
-        if c+1 < self.w and self.tile_type(r, c+1) != TileType.EMPTY:
-            nbrs[Direction.RIGHT] = ((r, c+1), self.tile_type(r, c+1))
+        if c + 1 < self.w and self.tile_type(r, c + 1) != TileType.EMPTY:
+            nbrs[Direction.RIGHT] = ((r, c + 1), self.tile_type(r, c + 1))
 
-        if r+1 < self.h and self.tile_type(r+1, c) != TileType.EMPTY:
-            nbrs[Direction.DOWN] = ((r+1, c), self.tile_type(r+1, c))
+        if r + 1 < self.h and self.tile_type(r + 1, c) != TileType.EMPTY:
+            nbrs[Direction.DOWN] = ((r + 1, c), self.tile_type(r + 1, c))
 
-        if c-1 >= 0 and self.tile_type(r, c-1) != TileType.EMPTY:
-            nbrs[Direction.LEFT] = ((r, c-1), self.tile_type(r, c-1))
+        if c - 1 >= 0 and self.tile_type(r, c - 1) != TileType.EMPTY:
+            nbrs[Direction.LEFT] = ((r, c - 1), self.tile_type(r, c - 1))
 
         return nbrs
 
@@ -156,13 +157,15 @@ class TileGrid(Updateable):
 # Travel Graph #
 ################
 
+
 @dataclass(eq=True, frozen=True)  # make hashable
-class RoadSegmentNode():
+class RoadSegmentNode:
     """An ENTER or EXIT travel node on a road segment.
 
     A road "segment" is any active road on a particular tile, e.g. an
     UP_DOWN_LEFT tile has an UP, DOWN, and LEFT segment.
     """
+
     tile_index: Tuple[int, int]  # (r, c)
     dir: Direction
     node_type: RoadNodeType
@@ -174,39 +177,39 @@ class RoadSegmentNode():
         x, y = grid_index_to_world_coords(r, c, center=True)
 
         if self.dir == Direction.UP:
-            y -= th//4
+            y -= th // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= rw//2//2
+                x -= rw // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += rw//2//2
+                x += rw // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += tw//4
+            x += tw // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= rw//2//2
+                y -= rw // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += rw//2//2
+                y += rw // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += th//4
+            y += th // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += rw//2//2
+                x += rw // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= rw//2//2
+                x -= rw // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= tw//4
+            x -= tw // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += rw//2//2
+                y += rw // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= rw//2//2
+                y -= rw // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().
-        object.__setattr__(self, 'world_coords', (x, y))
+        object.__setattr__(self, "world_coords", (x, y))
 
 
-class TravelIntersection():
+class TravelIntersection:
     """An intersection on the TileGrid comprised of nodes on the TravelGraph
     that represents all ENTER and EXIT travel nodes for the given tile.
 
@@ -238,26 +241,32 @@ class TravelIntersection():
     def add_segment_nodes(self, dir: Direction):
         """Add all ENTER and EXIT nodes for a specified tile road segment"""
         self.nodes[dir] = {
-            RoadNodeType.ENTER:
-                RoadSegmentNode((self.r, self.c), dir, RoadNodeType.ENTER),
-            RoadNodeType.EXIT:
-                RoadSegmentNode((self.r, self.c), dir, RoadNodeType.EXIT),
+            RoadNodeType.ENTER: RoadSegmentNode(
+                (self.r, self.c), dir, RoadNodeType.ENTER
+            ),
+            RoadNodeType.EXIT: RoadSegmentNode(
+                (self.r, self.c), dir, RoadNodeType.EXIT
+            ),
         }
 
     def enter_nodes(self):
         """Return all ENTER nodes in the intersection"""
-        return [self.nodes[dir][RoadNodeType.ENTER]
-                for dir in self.nodes.keys()]
+        return [
+            self.nodes[dir][RoadNodeType.ENTER] for dir in self.nodes.keys()
+        ]
 
     def exit_nodes(self):
         """Return all EXIT nodes in the intersection"""
-        return [self.nodes[dir][RoadNodeType.EXIT]
-                for dir in self.nodes.keys()]
+        return [
+            self.nodes[dir][RoadNodeType.EXIT] for dir in self.nodes.keys()
+        ]
 
     def get_nodes_for_segment(self, dir):
         """Return (ENTER, EXIT) nodes tuple for segment"""
-        return (self.nodes[dir][RoadNodeType.ENTER],
-                self.nodes[dir][RoadNodeType.EXIT])
+        return (
+            self.nodes[dir][RoadNodeType.ENTER],
+            self.nodes[dir][RoadNodeType.EXIT],
+        )
 
 
 class TravelGraph(Updateable):
@@ -291,9 +300,13 @@ class TravelGraph(Updateable):
             self.updates.append((Update.REMOVED, (u_node, v_node)))
             self.G.remove_edge(u_node, v_node)
 
-    def register_tile_intersection(self, r, c, tile_type,
-                                   nbrs: Dict[Direction, Tuple[Tuple[int, int],
-                                                               TileType]]):
+    def register_tile_intersection(
+        self,
+        r,
+        c,
+        tile_type,
+        nbrs: Dict[Direction, Tuple[Tuple[int, int], TileType]],
+    ):
         """Add new intersection to TravelGraph"""
         # Create and intraconnect nodes for new intersection
         insct = TravelIntersection(r, c, tile_type)
@@ -370,8 +383,9 @@ class TravelGraph(Updateable):
         """Get the shortest path from source node to target node"""
         return nx.shortest_path(self.G, source=source_node, target=target_node)
 
-    def get_updates(self) -> List[Tuple[Update, Tuple[RoadSegmentNode,
-                                                      RoadSegmentNode]]]:
+    def get_updates(
+        self,
+    ) -> List[Tuple[Update, Tuple[RoadSegmentNode, RoadSegmentNode]]]:
         """Get updates and clear updates queue"""
         updates = self.updates
         self.updates = []

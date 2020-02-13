@@ -21,8 +21,9 @@ from .grid import RoadSegmentNode
 #############
 
 
-class Color():
+class Color:
     """Game colors"""
+
     BG = (255, 255, 255)  # white
     ROAD = (0, 0, 0)  # black
     TRAVEL_EDGE = (255, 77, 255)  # pink
@@ -34,6 +35,7 @@ class RoadScreenLayers(IntEnum):
 
     0 = base layer. The higher the number to closer the sprite.
     """
+
     BG = 0
     TILES = 1
     TRAVEL_EDGES = 2
@@ -56,7 +58,8 @@ class RoadScreen(sprite.LayeredDirty):
     """
 
     def __init__(
-            self, network, *, display_travel_edges, randomize_vehicle_color):
+        self, network, *, display_travel_edges, randomize_vehicle_color
+    ):
         sprite.LayeredDirty.__init__(self)
         self.w = network.w
         self.h = network.h
@@ -67,13 +70,14 @@ class RoadScreen(sprite.LayeredDirty):
         self._randomize_vehicle_color = randomize_vehicle_color
 
         # Background
-        self.bg = BackgroundSprite(tw*self.w, th*self.h)
+        self.bg = BackgroundSprite(tw * self.w, th * self.h)
         self.add(self.bg, layer=RoadScreenLayers.TILES)
 
         # Other sprite indexes
         self.tiles: Dict[Tuple[int, int], TileSprite] = {}
-        self.edges: Dict[Tuple[RoadSegmentNode, RoadSegmentNode],
-                         TravelEdgeSprite] = {}
+        self.edges: Dict[
+            Tuple[RoadSegmentNode, RoadSegmentNode], TravelEdgeSprite
+        ] = {}
         self.vehicles: Dict[int, VehicleSprite] = {}
 
     def update(self):
@@ -225,8 +229,13 @@ class TravelEdgeSprite(sprite.DirtySprite):
         local_v_x, local_v_y = v_x - x_offset, v_y - y_offset
 
         image = pygame.Surface([w, h])
-        pygame.draw.line(image, Color.TRAVEL_EDGE, (local_u_x, local_u_y),
-                         (local_v_x, local_v_y), width=self.LINE_WIDTH)
+        pygame.draw.line(
+            image,
+            Color.TRAVEL_EDGE,
+            (local_u_x, local_u_y),
+            (local_v_x, local_v_y),
+            width=self.LINE_WIDTH,
+        )
 
         rect = image.get_rect()
         rect.x, rect.y = x_offset, y_offset
@@ -251,21 +260,25 @@ class VehicleSprite(sprite.DirtySprite):
 
     def _image(self, x, y, randomize_color):
         """Create vehicle image"""
-        image = pygame.Surface([self.RADIUS*2+1, self.RADIUS*2+1])
+        image = pygame.Surface([self.RADIUS * 2 + 1, self.RADIUS * 2 + 1])
 
-        color = (random_color(150, 255) if randomize_color
-                 else Color.VEHICLE_DEFAULT)
-        pygame.draw.circle(image, color, (self.RADIUS, self.RADIUS),
-                           radius=self.RADIUS)
+        color = (
+            random_color(150, 255)
+            if randomize_color
+            else Color.VEHICLE_DEFAULT
+        )
+        pygame.draw.circle(
+            image, color, (self.RADIUS, self.RADIUS), radius=self.RADIUS
+        )
 
         rect = image.get_rect()
-        rect.x, rect.y = x-self.RADIUS, y-self.RADIUS
+        rect.x, rect.y = x - self.RADIUS, y - self.RADIUS
 
         return image, rect
 
     def update(self, x, y):
         """Update vehicle location"""
-        self.rect.x, self.rect.y = x-self.RADIUS, y-self.RADIUS
+        self.rect.x, self.rect.y = x - self.RADIUS, y - self.RADIUS
         self.dirty = 1
 
 
@@ -407,39 +420,53 @@ def tile_poly(up=False, right=False, down=False, left=False):
 
     if up:
         points.extend(
-            [(tw//2-(rw//2-1), 0),
-             ((tw//2+1)+(rw//2-1), 0),
-             ((tw//2+1)+(rw//2-1), th//2-(rw//2-1))])
+            [
+                (tw // 2 - (rw // 2 - 1), 0),
+                ((tw // 2 + 1) + (rw // 2 - 1), 0),
+                ((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
+            ]
+        )
     else:
         points.extend(
-            [((tw//2+1)+(rw//2-1), th//2-(rw//2-1))])
+            [((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1))]
+        )
 
     if right:
         points.extend(
-            [(tw-1, th//2-(rw//2-1)),
-             (tw-1, (th//2+1)+(rw//2-1)),
-             ((tw//2+1)+(rw//2-1), (th//2+1)+(rw//2-1))])
+            [
+                (tw - 1, th // 2 - (rw // 2 - 1)),
+                (tw - 1, (th // 2 + 1) + (rw // 2 - 1)),
+                ((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
+            ]
+        )
     else:
         points.extend(
-            [((tw//2+1)+(rw//2-1), (th//2+1)+(rw//2-1))])
+            [((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
+        )
 
     if down:
         points.extend(
-            [((tw//2+1)+(rw//2-1), th-1),
-             (tw//2-(rw//2-1), th-1),
-             (tw//2-(rw//2-1), (th//2+1)+(rw//2-1))])
+            [
+                ((tw // 2 + 1) + (rw // 2 - 1), th - 1),
+                (tw // 2 - (rw // 2 - 1), th - 1),
+                (tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
+            ]
+        )
     else:
         points.extend(
-            [(tw//2-(rw//2-1), (th//2+1)+(rw//2-1))])
+            [(tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
+        )
 
     if left:
         points.extend(
-            [(0, (th//2+1)+(rw//2-1)),
-             (0, th//2-(rw//2-1)),
-             (tw//2-(rw//2-1), th//2-(rw//2-1))])
+            [
+                (0, (th // 2 + 1) + (rw // 2 - 1)),
+                (0, th // 2 - (rw // 2 - 1)),
+                (tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
+            ]
+        )
     else:
-        points.extend(
-            [(tw//2-(rw//2-1), th//2-(rw//2-1))])
+        points.extend([(tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1))])
 
     return points
 
@@ -467,6 +494,7 @@ TILE_POLYS = {
     TileType.UP_DOWN_LEFT: tile_poly(up=True, down=True, left=True),
     TileType.UP_RIGHT_LEFT: tile_poly(up=True, right=True, left=True),
     # four neighbors
-    TileType.UP_RIGHT_DOWN_LEFT: tile_poly(up=True, right=True, down=True,
-                                           left=True)
+    TileType.UP_RIGHT_DOWN_LEFT: tile_poly(
+        up=True, right=True, down=True, left=True
+    ),
 }

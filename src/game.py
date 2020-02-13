@@ -50,6 +50,7 @@ STRESS_TEST = False
 # Game Logic #
 ##############
 
+
 def game_loop(window, clock):
     """Game loop"""
 
@@ -72,6 +73,7 @@ def game_loop(window, clock):
     # DEMO
     if STRESS_TEST:
         import random
+
         network.add_road(0, 0, restrict_to_neighbors=False)
         # Fill entire network grid
         for r in range(network.h):
@@ -82,12 +84,13 @@ def game_loop(window, clock):
             node = random.choice(list(network.graph.G.nodes))
             network.traffic.add_vehicle(node)
     else:
-        network.add_road(network.h//2, network.w//2,
-                         restrict_to_neighbors=False)
+        network.add_road(
+            network.h // 2, network.w // 2, restrict_to_neighbors=False
+        )
 
     while 1:
         # Get loop time, convert milliseconds to seconds
-        tick = clock.tick(60)/1000
+        tick = clock.tick(60) / 1000
 
         # Process user and window inputs
         # IMPORTANT: do not remove -- this enables us to close the game
@@ -112,6 +115,7 @@ def game_loop(window, clock):
 def randomize_vehicle_paths(window, network):
     # Send our sim vehicles on random errands
     import random
+
     if not list(network.graph.G.nodes):
         return
     for v in network.traffic.vehicles:
@@ -125,6 +129,7 @@ def randomize_vehicle_paths(window, network):
 # Input #
 #########
 
+
 def process_input(window, network):
     """Loop through all active events and process accordingly"""
     for event in pygame.event.get():
@@ -132,8 +137,9 @@ def process_input(window, network):
         if event.type == pygame.QUIT:
             exit()
         # Add new road tile when user presses and holds mouse button
-        elif ((event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)
-              or (event.type == pygame.MOUSEMOTION and event.buttons[0] == 1)):
+        elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or (
+            event.type == pygame.MOUSEMOTION and event.buttons[0] == 1
+        ):
             process_mouse_button_down(window, network)
 
 
@@ -145,6 +151,7 @@ def process_mouse_button_down(window, network):
     # DEMO
     if not STRESS_TEST:
         import random
+
         if road_added and random.random() < 0.5:
             node = random.choice(list(network.graph.G.nodes))
             network.traffic.add_vehicle(node)

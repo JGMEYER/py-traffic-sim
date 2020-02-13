@@ -33,22 +33,30 @@ class Traffic(Updateable):
         self.updates.append((Update.ADDED, (v._id, x, y)))
         return v
 
-    def step(self, tick, grid, vehicle_stop_wait_time,
-             intersection_clear_time):
+    def step(
+        self, tick, grid, vehicle_stop_wait_time, intersection_clear_time
+    ):
         """Step each vehicle in traffic list"""
         for insct in self.inscts.values():
-            insct.step(tick, self.vehicles, vehicle_stop_wait_time,
-                       intersection_clear_time)
+            insct.step(
+                tick,
+                self.vehicles,
+                vehicle_stop_wait_time,
+                intersection_clear_time,
+            )
 
         for v in self.vehicles:
-            entering_insct, segment_dir = v.step(tick, grid,
-                                                 vehicle_stop_wait_time)
+            entering_insct, segment_dir = v.step(
+                tick, grid, vehicle_stop_wait_time
+            )
             if entering_insct:
-                self._add_vehicle_to_insct(v, segment_dir,
-                                           vehicle_stop_wait_time)
+                self._add_vehicle_to_insct(
+                    v, segment_dir, vehicle_stop_wait_time
+                )
 
-    def _add_vehicle_to_insct(self, vehicle, drctn: Direction,
-                              vehicle_stop_wait_time):
+    def _add_vehicle_to_insct(
+        self, vehicle, drctn: Direction, vehicle_stop_wait_time
+    ):
         r, c = world_coords_to_grid_index(*vehicle._world_coords)
 
         if not self.inscts.get((r, c)):
@@ -69,7 +77,7 @@ class Traffic(Updateable):
         return updates
 
 
-class Intersection():
+class Intersection:
     """An Intersection construct that determines how Vehicles pass between
     intersection edge nodes in the TravelGraph.
 
@@ -81,7 +89,7 @@ class Intersection():
             Direction.UP: [],  # list of vehicle ids
             Direction.RIGHT: [],
             Direction.DOWN: [],
-            Direction.LEFT: []
+            Direction.LEFT: [],
         }
         self.wait_timers: Dict(Direction, float) = {
             Direction.UP: 0,
@@ -112,8 +120,9 @@ class Intersection():
         if self.queues[drctn]:
             self.wait_timers[drctn] = vehicle_stop_wait_time
 
-    def step(self, tick, vehicles, vehicle_stop_wait_time,
-             intersection_clear_time):
+    def step(
+        self, tick, vehicles, vehicle_stop_wait_time, intersection_clear_time
+    ):
         """Release vehicles from their queues, when possible"""
 
         for direction, timer in self.wait_timers.items():
@@ -129,8 +138,9 @@ class Intersection():
         #       [UP, RIGHT, DOWN, LEFT] -> [LEFT, UP, RIGHT, DOWN]
         #     Example: RIGHT let out last.
         #       [UP, RIGHT, DOWN, LEFT] -> [DOWN, LEFT, UP, RIGHT]
-        dir_order = deque([Direction.UP, Direction.RIGHT, Direction.DOWN,
-                           Direction.LEFT])
+        dir_order = deque(
+            [Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT]
+        )
         dir_order.rotate(-1 * (self._last_dequeue_dir + 1))
 
         for drctn in dir_order:
@@ -144,7 +154,7 @@ class Intersection():
                 break
 
 
-class Vehicle():
+class Vehicle:
     """A Vehicle that travels along the TravelGraph"""
 
     def __init__(self, id, node: RoadSegmentNode):
@@ -200,8 +210,9 @@ class Vehicle():
         """Set Vehicle target node and trajectory."""
         self._t_node = self._path[0]
 
-        trajectory = pathing.LinearTrajectory(*self._world_coords,
-                                              *self._t_node.world_coords)
+        trajectory = pathing.LinearTrajectory(
+            *self._world_coords, *self._t_node.world_coords
+        )
         self._trajectory = trajectory
 
     def step(self, tick, grid, stop_wait_time) -> (bool, Direction):
@@ -222,8 +233,9 @@ class Vehicle():
                 self._set_target()
 
             # Attempt move towards target
-            dist_moved = self._move_towards_target(self._trajectory,
-                                                   remaining_move_dist)
+            dist_moved = self._move_towards_target(
+                self._trajectory, remaining_move_dist
+            )
             remaining_move_dist -= dist_moved
 
             entering_insct = self.entering_insct(grid)
@@ -247,8 +259,10 @@ class Vehicle():
         """Returns True if Vehicle at the edge of an intersection, waiting to
         enter.
         """
-        if (self._world_coords == self._t_node.world_coords
-                and self._t_node.node_type == RoadNodeType.ENTER):
+        if (
+            self._world_coords == self._t_node.world_coords
+            and self._t_node.node_type == RoadNodeType.ENTER
+        ):
 
             r, c = world_coords_to_grid_index(*self._world_coords)
             return grid.tile_type(r, c).is_intersection()
