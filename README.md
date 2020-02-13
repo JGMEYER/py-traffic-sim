@@ -9,7 +9,8 @@ A program to simulate vehicle traffic patterns using Python and pygame.
 ## Installing and running the program
 
 1. Install [pipenv](https://pipenv-fork.readthedocs.io/en/latest/basics.html).
-2. From the project directory run: $ `pipenv run python src/game.py`
+1. Run $`pipenv run pre-commit install` to configure git pre-commit hooks.
+1. From the project directory run: $ `pipenv run python src/game.py`
 
 ## Running tests
 
