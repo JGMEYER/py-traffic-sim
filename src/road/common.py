@@ -2,17 +2,20 @@ from abc import ABCMeta, abstractmethod
 from enum import IntEnum
 from typing import List, Tuple
 
+from dynaconf import settings
+
 ###################
 # Tile properties #
 ###################
 
-TILE_WIDTH = 64
-TILE_HEIGHT = 64
-ROAD_WIDTH = 30
-# Constraints
-assert TILE_WIDTH % 2 == 0
-assert TILE_HEIGHT % 2 == 0
-assert ROAD_WIDTH % 2 == 0
+# TODO rm
+# TILE_WIDTH = 64
+# TILE_HEIGHT = 64
+# ROAD_WIDTH = 30
+# # Constraints
+# assert TILE_WIDTH % 2 == 0
+# assert TILE_HEIGHT % 2 == 0
+# assert ROAD_WIDTH % 2 == 0
 
 
 class TileType(IntEnum):
@@ -66,11 +69,11 @@ def grid_index_to_world_coords(r, c, center=False):
     """
     if center:
         return (
-            c * TILE_WIDTH + TILE_WIDTH // 2,
-            r * TILE_HEIGHT + TILE_HEIGHT // 2,
+            c * settings.TILE_WIDTH + settings.TILE_WIDTH // 2,
+            r * settings.TILE_HEIGHT + settings.TILE_HEIGHT // 2,
         )
     else:
-        return (c * TILE_WIDTH, r * TILE_HEIGHT)
+        return (c * settings.TILE_WIDTH, r * settings.TILE_HEIGHT)
 
 
 def world_coords_to_grid_index(x: float, y: float):
@@ -84,7 +87,7 @@ def world_coords_to_grid_index(x: float, y: float):
     # consequences with how this function is used. Time will tell.
     x, y = int(x), int(y)
 
-    return (y // TILE_HEIGHT, x // TILE_WIDTH)
+    return (y // settings.TILE_HEIGHT, x // settings.TILE_WIDTH)
 
 
 ####################

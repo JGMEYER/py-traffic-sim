@@ -25,7 +25,8 @@ class RoadNetwork:
     def add_road(self, r, c, restrict_to_neighbors=True):
         """Add road node to the network
 
-        returns: road added (bool)"""
+        returns: road added (bool)
+        """
         tile_added = self.grid.add_tile(r, c, restrict_to_neighbors)
         if tile_added:
             nbrs = self.grid.get_neighbors(r, c)

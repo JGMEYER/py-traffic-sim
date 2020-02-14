@@ -3,12 +3,10 @@ from enum import IntEnum
 from typing import Dict, Tuple
 
 import pygame
+from dynaconf import settings
 from pygame import sprite
 
 from .common import (
-    TILE_WIDTH as tw,
-    TILE_HEIGHT as th,
-    ROAD_WIDTH as rw,
     TileType,
     Update,
     grid_index_to_world_coords,
@@ -70,7 +68,9 @@ class RoadScreen(sprite.LayeredDirty):
         self._randomize_vehicle_color = randomize_vehicle_color
 
         # Background
-        self.bg = BackgroundSprite(tw * self.w, th * self.h)
+        self.bg = BackgroundSprite(
+            settings.TILE_WIDTH * self.w, settings.TILE_HEIGHT * self.h
+        )
         self.add(self.bg, layer=RoadScreenLayers.TILES)
 
         # Other sprite indexes
@@ -182,7 +182,7 @@ class TileSprite(sprite.DirtySprite):
 
     def _image(self, r, c, tile_type, highlighted=False):
         """Create tile image"""
-        image = pygame.Surface([tw, th])
+        image = pygame.Surface([settings.TILE_WIDTH, settings.TILE_HEIGHT])
         pygame.draw.polygon(image, Color.ROAD, TILE_POLYS[tile_type])
 
         rect = image.get_rect()
@@ -421,52 +421,119 @@ def tile_poly(up=False, right=False, down=False, left=False):
     if up:
         points.extend(
             [
-                (tw // 2 - (rw // 2 - 1), 0),
-                ((tw // 2 + 1) + (rw // 2 - 1), 0),
-                ((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
+                (settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1), 0),
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    0,
+                ),
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                ),
             ]
         )
     else:
         points.extend(
-            [((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1))]
+            [
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                )
+            ]
         )
 
     if right:
         points.extend(
             [
-                (tw - 1, th // 2 - (rw // 2 - 1)),
-                (tw - 1, (th // 2 + 1) + (rw // 2 - 1)),
-                ((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
+                (
+                    settings.TILE_WIDTH - 1,
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                ),
+                (
+                    settings.TILE_WIDTH - 1,
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                ),
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                ),
             ]
         )
     else:
         points.extend(
-            [((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
+            [
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                )
+            ]
         )
 
     if down:
         points.extend(
             [
-                ((tw // 2 + 1) + (rw // 2 - 1), th - 1),
-                (tw // 2 - (rw // 2 - 1), th - 1),
-                (tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
+                (
+                    (settings.TILE_WIDTH // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT - 1,
+                ),
+                (
+                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT - 1,
+                ),
+                (
+                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                ),
             ]
         )
     else:
         points.extend(
-            [(tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
+            [
+                (
+                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                )
+            ]
         )
 
     if left:
         points.extend(
             [
-                (0, (th // 2 + 1) + (rw // 2 - 1)),
-                (0, th // 2 - (rw // 2 - 1)),
-                (tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
+                (
+                    0,
+                    (settings.TILE_HEIGHT // 2 + 1)
+                    + (settings.ROAD_WIDTH // 2 - 1),
+                ),
+                (
+                    0,
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                ),
+                (
+                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                ),
             ]
         )
     else:
-        points.extend([(tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1))])
+        points.extend(
+            [
+                (
+                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
+                )
+            ]
+        )
 
     return points
 

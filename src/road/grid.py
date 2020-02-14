@@ -2,11 +2,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 import networkx as nx
+from dynaconf import settings
 
 from .common import (
-    TILE_WIDTH as tw,
-    TILE_HEIGHT as th,
-    ROAD_WIDTH as rw,
     Direction,
     RoadNodeType,
     TileType,
@@ -177,32 +175,32 @@ class RoadSegmentNode:
         x, y = grid_index_to_world_coords(r, c, center=True)
 
         if self.dir == Direction.UP:
-            y -= th // 4
+            y -= settings.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= rw // 2 // 2
+                x -= settings.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += rw // 2 // 2
+                x += settings.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += tw // 4
+            x += settings.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= rw // 2 // 2
+                y -= settings.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += rw // 2 // 2
+                y += settings.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += th // 4
+            y += settings.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += rw // 2 // 2
+                x += settings.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= rw // 2 // 2
+                x -= settings.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= tw // 4
+            x -= settings.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += rw // 2 // 2
+                y += settings.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= rw // 2 // 2
+                y -= settings.ROAD_WIDTH // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().

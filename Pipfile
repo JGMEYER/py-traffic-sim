@@ -13,6 +13,7 @@ pygame = "==2.0.0.dev4"
 networkx = "*"
 numpy = "*"
 flake8 = "*"
+dynaconf = "*"
 
 [requires]
 python_version = "3.7"

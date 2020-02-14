@@ -1,8 +1,9 @@
 from collections import deque
 from typing import Dict, List, Tuple
 
+from dynaconf import settings
+
 from .common import (
-    TILE_WIDTH as tw,
     Direction,
     RoadNodeType,
     Update,
@@ -160,7 +161,9 @@ class Vehicle:
     def __init__(self, id, node: RoadSegmentNode):
         # Attributes
         self._id = id
-        self.speed = 1 * tw  # WARNING: could have undesirable behavior
+        self.speed = (
+            1 * settings.TILE_WIDTH
+        )  # WARNING: could have undesirable behavior
 
         # Location
         self._world_coords = node.world_coords

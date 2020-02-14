@@ -1,21 +1,20 @@
 import pygame
 import sys
 
+from dynaconf import settings
+
 import input
 from road import graphics as road_gfx
-from road.common import TILE_WIDTH as tw, TILE_HEIGHT as th
 from road.network import RoadNetwork
-from settings import GameSettings
-
-# Create width and height constants
-WINDOW_WIDTH = tw * GameSettings.GRID_WIDTH
-WINDOW_HEIGHT = th * GameSettings.GRID_HEIGHT
 
 """
 This is the main file for game logic. Code here may be messy and break good
 practices, like variable encapsulation, in favor of fast iteration while
 testing.
 """
+
+WINDOW_WIDTH = settings.TILE_WIDTH * settings.GRID_WIDTH
+WINDOW_HEIGHT = settings.TILE_HEIGHT * settings.GRID_HEIGHT
 
 
 def init():
@@ -42,10 +41,6 @@ def exit():
     sys.exit()
 
 
-# DEMO
-STRESS_TEST = False
-
-
 ##############
 # Game Logic #
 ##############
@@ -56,22 +51,22 @@ def game_loop(window, clock):
 
     # Create road network
     network = RoadNetwork(
-        GameSettings.GRID_WIDTH,
-        GameSettings.GRID_HEIGHT,
-        vehicle_stop_wait_time=GameSettings.VEHICLE_STOP_WAIT_TIME,
-        intersection_clear_time=GameSettings.INTERSECTION_CLEAR_TIME,
+        settings.GRID_WIDTH,
+        settings.GRID_HEIGHT,
+        vehicle_stop_wait_time=settings.VEHICLE_STOP_WAIT_TIME,
+        intersection_clear_time=settings.INTERSECTION_CLEAR_TIME,
     )
 
     # Create road screen (for rendering)
     road_screen = road_gfx.RoadScreen(
         network,
-        display_travel_edges=GameSettings.DISPLAY_TRAVEL_EDGES,
-        randomize_vehicle_color=GameSettings.RANDOMIZE_VEHICLE_COLOR,
+        display_travel_edges=settings.DISPLAY_TRAVEL_EDGES,
+        randomize_vehicle_color=settings.RANDOMIZE_VEHICLE_COLOR,
     )
     road_screen.clear(window, road_screen.bg.image)
 
     # DEMO
-    if STRESS_TEST:
+    if settings.STRESS_TEST:
         import random
 
         network.add_road(0, 0, restrict_to_neighbors=False)
@@ -145,11 +140,13 @@ def process_input(window, network):
 
 def process_mouse_button_down(window, network):
     """Place new tile on grid"""
-    r, c = input.mouse_coords_to_grid_index(tw, th)
+    r, c = input.mouse_coords_to_grid_index(
+        settings.TILE_WIDTH, settings.TILE_HEIGHT
+    )
     road_added = network.add_road(r, c)
 
     # DEMO
-    if not STRESS_TEST:
+    if not settings.STRESS_TEST:
         import random
 
         if road_added and random.random() < 0.5:
@@ -160,10 +157,12 @@ def process_mouse_button_down(window, network):
 # BROKEN
 def display_tile_cursor(window):
     """Highlights tile underneath mouse"""
-    r, c = input.mouse_coords_to_grid_index(tw, th)
-    x = c * tw
-    y = r * th
-    rect = pygame.Rect(x, y, tw, th)
+    r, c = input.mouse_coords_to_grid_index(
+        settings.TILE_WIDTH, settings.TILE_HEIGHT
+    )
+    x = c * settings.TILE_WIDTH
+    y = r * settings.TILE_HEIGHT
+    rect = pygame.Rect(x, y, settings.TILE_WIDTH, settings.TILE_HEIGHT)
     pygame.draw.rect(window, (0, 255, 255), rect)
 
 
