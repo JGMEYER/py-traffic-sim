@@ -1,8 +1,6 @@
 from collections import deque
 from typing import Dict, List, Tuple
 
-from dynaconf import settings
-
 from .common import (
     Direction,
     RoadNodeType,
@@ -157,7 +155,7 @@ class Vehicle:
         # Attributes
         self._id = id
         self.speed = (
-            1 * settings.TILE_WIDTH
+            1 * config.TILE_WIDTH
         )  # WARNING: could have undesirable behavior
 
         # Location
