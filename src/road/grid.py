@@ -4,9 +4,6 @@ from typing import Dict, List, Tuple
 import networkx as nx
 
 from .common import (
-    TILE_WIDTH as tw,
-    TILE_HEIGHT as th,
-    ROAD_WIDTH as rw,
     Direction,
     RoadNodeType,
     TileType,
@@ -14,6 +11,7 @@ from .common import (
     Updateable,
     grid_index_to_world_coords,
 )
+from config import config
 
 
 #############
@@ -172,37 +170,42 @@ class RoadSegmentNode:
     world_coords: Tuple[int, int] = field(init=False)
 
     def __post_init__(self):
-        """Get location of `RoadSegmentNode` on world plane."""
+        """Get location of `RoadSegmentNode` on the world plane."""
+        # NOTE: We call `config` directly here. This isn't the convention we
+        # set, though there may not be other alternatives for dataclasses.
+
         r, c = self.tile_index
-        x, y = grid_index_to_world_coords(r, c, center=True)
+        x, y = grid_index_to_world_coords(
+            config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
+        )
 
         if self.dir == Direction.UP:
-            y -= th // 4
+            y -= config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= rw // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += rw // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += tw // 4
+            x += config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= rw // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += rw // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += th // 4
+            y += config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += rw // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= rw // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= tw // 4
+            x -= config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += rw // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= rw // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().
