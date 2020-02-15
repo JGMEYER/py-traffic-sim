@@ -3,7 +3,6 @@ from enum import IntEnum
 from typing import Dict, Tuple
 
 import pygame
-from dynaconf import settings
 from pygame import sprite
 
 from .common import (
@@ -12,6 +11,7 @@ from .common import (
     grid_index_to_world_coords,
 )
 from .grid import RoadSegmentNode
+from config import config
 
 
 #############
@@ -55,21 +55,18 @@ class RoadScreen(sprite.LayeredDirty):
     Sprites are grouped and layered to match the order of `RoadScreenLayers`.
     """
 
-    def __init__(
-        self, network, *, display_travel_edges, randomize_vehicle_color
-    ):
+    def __init__(self, config, network):
         sprite.LayeredDirty.__init__(self)
+
+        self.config = config
+
         self.w = network.w
         self.h = network.h
         self.network = network
 
-        # Passed Constants
-        self._display_travel_edges = display_travel_edges
-        self._randomize_vehicle_color = randomize_vehicle_color
-
         # Background
         self.bg = BackgroundSprite(
-            settings.TILE_WIDTH * self.w, settings.TILE_HEIGHT * self.h
+            config.TILE_WIDTH * self.w, config.TILE_HEIGHT * self.h
         )
         self.add(self.bg, layer=RoadScreenLayers.TILES)
 
@@ -94,7 +91,7 @@ class RoadScreen(sprite.LayeredDirty):
         # Update tiles
         for u_type, (r, c, tile_type) in updates:
             if u_type == Update.ADDED:
-                sprite = TileSprite(r, c, tile_type)
+                sprite = TileSprite(self.config, r, c, tile_type)
                 self.tiles[(r, c)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TILES)
 
@@ -109,7 +106,7 @@ class RoadScreen(sprite.LayeredDirty):
         for u_type, (u_node, v_node) in updates:
             if u_type == Update.ADDED:
                 sprite = TravelEdgeSprite(u_node, v_node)
-                sprite.visible = self._display_travel_edges
+                sprite.visible = self.config.DISPLAY_TRAVEL_EDGES
                 self.edges[(u_node, v_node)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TRAVEL_EDGES)
 
@@ -126,7 +123,7 @@ class RoadScreen(sprite.LayeredDirty):
         for u_type, (id, x, y) in updates:
             if u_type == Update.ADDED:
                 sprite = VehicleSprite(
-                    x, y, randomize_color=self._randomize_vehicle_color
+                    x, y, randomize_color=self.config.RANDOMIZE_VEHICLE_COLOR
                 )
                 self.vehicles[id] = sprite
                 self.add(sprite, layer=RoadScreenLayers.VEHICLES)
@@ -167,8 +164,10 @@ class BackgroundSprite(sprite.DirtySprite):
 class TileSprite(sprite.DirtySprite):
     """Sprite for a road tile"""
 
-    def __init__(self, r, c, tile_type):
+    def __init__(self, config, r, c, tile_type):
         sprite.DirtySprite.__init__(self)
+
+        self.config = config
 
         self.r = r
         self.c = c
@@ -182,11 +181,15 @@ class TileSprite(sprite.DirtySprite):
 
     def _image(self, r, c, tile_type, highlighted=False):
         """Create tile image"""
-        image = pygame.Surface([settings.TILE_WIDTH, settings.TILE_HEIGHT])
+        image = pygame.Surface(
+            [self.config.TILE_WIDTH, self.config.TILE_HEIGHT]
+        )
         pygame.draw.polygon(image, Color.ROAD, TILE_POLYS[tile_type])
 
         rect = image.get_rect()
-        rect.x, rect.y = grid_index_to_world_coords(r, c)
+        rect.x, rect.y = grid_index_to_world_coords(
+            config.TILE_WIDTH, config.TILE_HEIGHT, r, c
+        )
 
         return image, rect
 
@@ -295,7 +298,7 @@ def random_color(rgb_min, rgb_max):
 ##############
 
 
-def tile_poly(up=False, right=False, down=False, left=False):
+def tile_poly(config, *, up=False, right=False, down=False, left=False):
     """Construct polygon based on road connections.
 
     The calculations of these point locations depends on the width and height
@@ -397,7 +400,7 @@ def tile_poly(up=False, right=False, down=False, left=False):
     has a road segment going in a particular direction. We only include points
     necessary to complete to polygon and to avoid redundancy.
 
-    IMPORTANT NOTE:
+    NOTE:
 
     This strategy creates redundant points on fully straight edges. e.g. an
     UP_DOWN_LEFT tile really only needs the following points to render:
@@ -416,152 +419,96 @@ def tile_poly(up=False, right=False, down=False, left=False):
     quickly on adding tiles with dynamic sizes. If needed, this can be
     optimized later.
     """
+    tw, th = config.TILE_WIDTH, config.TILE_HEIGHT
+    rw = config.ROAD_WIDTH
+
     points = []
 
     if up:
         points.extend(
             [
-                (settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1), 0),
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    0,
-                ),
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                ),
+                (tw // 2 - (rw // 2 - 1), 0),
+                ((tw // 2 + 1) + (rw // 2 - 1), 0,),
+                ((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1),),
             ]
         )
     else:
         points.extend(
-            [
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                )
-            ]
+            [((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1),)]
         )
 
     if right:
         points.extend(
             [
+                (tw - 1, th // 2 - (rw // 2 - 1),),
+                (tw - 1, (th // 2 + 1) + (rw // 2 - 1),),
                 (
-                    settings.TILE_WIDTH - 1,
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                ),
-                (
-                    settings.TILE_WIDTH - 1,
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                ),
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
+                    (tw // 2 + 1) + (rw // 2 - 1),
+                    (th // 2 + 1) + (rw // 2 - 1),
                 ),
             ]
         )
     else:
         points.extend(
-            [
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                )
-            ]
+            [((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),)]
         )
 
     if down:
         points.extend(
             [
-                (
-                    (settings.TILE_WIDTH // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT - 1,
-                ),
-                (
-                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT - 1,
-                ),
-                (
-                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                ),
+                ((tw // 2 + 1) + (rw // 2 - 1), th - 1,),
+                (tw // 2 - (rw // 2 - 1), th - 1,),
+                (tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),),
             ]
         )
     else:
         points.extend(
-            [
-                (
-                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                )
-            ]
+            [(tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),)]
         )
 
     if left:
         points.extend(
             [
-                (
-                    0,
-                    (settings.TILE_HEIGHT // 2 + 1)
-                    + (settings.ROAD_WIDTH // 2 - 1),
-                ),
-                (
-                    0,
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                ),
-                (
-                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                ),
+                (0, (th // 2 + 1) + (rw // 2 - 1),),
+                (0, th // 2 - (rw // 2 - 1),),
+                (tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1),),
             ]
         )
     else:
-        points.extend(
-            [
-                (
-                    settings.TILE_WIDTH // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                    settings.TILE_HEIGHT // 2 - (settings.ROAD_WIDTH // 2 - 1),
-                )
-            ]
-        )
+        points.extend([(tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1),)])
 
     return points
 
 
+# NOTE: We pass config directly here just to get this working. In the future,
+# we'll want to rethink how values are passed via config, so it may be worth
+# reworking how we pass config here.
 TILE_POLYS = {
     # no tile
     TileType.EMPTY: [],
     # no neighbors
-    TileType.ALONE: tile_poly(),
+    TileType.ALONE: tile_poly(config),
     # one neighbor
-    TileType.UP: tile_poly(up=True),
-    TileType.RIGHT: tile_poly(right=True),
-    TileType.DOWN: tile_poly(down=True),
-    TileType.LEFT: tile_poly(left=True),
+    TileType.UP: tile_poly(config, up=True),
+    TileType.RIGHT: tile_poly(config, right=True),
+    TileType.DOWN: tile_poly(config, down=True),
+    TileType.LEFT: tile_poly(config, left=True),
     # two neighbors
-    TileType.UP_RIGHT: tile_poly(up=True, right=True),
-    TileType.RIGHT_DOWN: tile_poly(right=True, down=True),
-    TileType.DOWN_LEFT: tile_poly(down=True, left=True),
-    TileType.UP_LEFT: tile_poly(up=True, left=True),
-    TileType.UP_DOWN: tile_poly(up=True, down=True),
-    TileType.RIGHT_LEFT: tile_poly(right=True, left=True),
+    TileType.UP_RIGHT: tile_poly(config, up=True, right=True),
+    TileType.RIGHT_DOWN: tile_poly(config, right=True, down=True),
+    TileType.DOWN_LEFT: tile_poly(config, down=True, left=True),
+    TileType.UP_LEFT: tile_poly(config, up=True, left=True),
+    TileType.UP_DOWN: tile_poly(config, up=True, down=True),
+    TileType.RIGHT_LEFT: tile_poly(config, right=True, left=True),
     # three neighbors
-    TileType.UP_RIGHT_DOWN: tile_poly(up=True, right=True, down=True),
-    TileType.RIGHT_DOWN_LEFT: tile_poly(right=True, down=True, left=True),
-    TileType.UP_DOWN_LEFT: tile_poly(up=True, down=True, left=True),
-    TileType.UP_RIGHT_LEFT: tile_poly(up=True, right=True, left=True),
+    TileType.UP_RIGHT_DOWN: tile_poly(config, up=True, right=True, down=True),
+    TileType.RIGHT_DOWN_LEFT: tile_poly(
+        config, right=True, down=True, left=True
+    ),
+    TileType.UP_DOWN_LEFT: tile_poly(config, up=True, down=True, left=True),
+    TileType.UP_RIGHT_LEFT: tile_poly(config, up=True, right=True, left=True),
     # four neighbors
     TileType.UP_RIGHT_DOWN_LEFT: tile_poly(
-        up=True, right=True, down=True, left=True
+        config, up=True, right=True, down=True, left=True
     ),
 }

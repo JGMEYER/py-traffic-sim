@@ -7,20 +7,16 @@ class RoadNetwork:
     road network.
     """
 
-    def __init__(
-        self, w, h, *, vehicle_stop_wait_time, intersection_clear_time
-    ):
+    def __init__(self, config, w, h):
+        self.config = config
+
         self.w = w
         self.h = h
-
-        # Passed Constants
-        self.VEHICLE_STOP_WAIT_TIME = vehicle_stop_wait_time
-        self.INTERSECTION_CLEAR_TIME = intersection_clear_time
 
         # Network components
         self.grid = TileGrid(w, h)
         self.graph = TravelGraph()
-        self.traffic = Traffic()
+        self.traffic = Traffic(config)
 
     def add_road(self, r, c, restrict_to_neighbors=True):
         """Add road node to the network
@@ -38,9 +34,4 @@ class RoadNetwork:
 
     def step(self, tick):
         """Step the network by some amount of ticks"""
-        self.traffic.step(
-            tick,
-            self.grid,
-            self.VEHICLE_STOP_WAIT_TIME,
-            self.INTERSECTION_CLEAR_TIME,
-        )
+        self.traffic.step(tick, self.grid)

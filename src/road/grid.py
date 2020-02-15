@@ -12,6 +12,7 @@ from .common import (
     Updateable,
     grid_index_to_world_coords,
 )
+from config import config
 
 
 #############
@@ -172,7 +173,11 @@ class RoadSegmentNode:
     def __post_init__(self):
         """Get location of `RoadSegmentNode` on world plane."""
         r, c = self.tile_index
-        x, y = grid_index_to_world_coords(r, c, center=True)
+        # NOTE: We call config directly here. This isn't the convention we set,
+        # though there may not be other alternatives.
+        x, y = grid_index_to_world_coords(
+            config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
+        )
 
         if self.dir == Direction.UP:
             y -= settings.TILE_HEIGHT // 4

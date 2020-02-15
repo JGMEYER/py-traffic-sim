@@ -2,20 +2,9 @@ from abc import ABCMeta, abstractmethod
 from enum import IntEnum
 from typing import List, Tuple
 
-from dynaconf import settings
-
 ###################
 # Tile properties #
 ###################
-
-# TODO rm
-# TILE_WIDTH = 64
-# TILE_HEIGHT = 64
-# ROAD_WIDTH = 30
-# # Constraints
-# assert TILE_WIDTH % 2 == 0
-# assert TILE_HEIGHT % 2 == 0
-# assert ROAD_WIDTH % 2 == 0
 
 
 class TileType(IntEnum):
@@ -63,20 +52,20 @@ class TileType(IntEnum):
         return len(self.segment_directions()) >= 3
 
 
-def grid_index_to_world_coords(r, c, center=False):
+def grid_index_to_world_coords(tile_width, tile_height, r, c, center=False):
     """Convert (row, col) index on the grid to (x, y) coordinate on the world
     plane.
     """
     if center:
         return (
-            c * settings.TILE_WIDTH + settings.TILE_WIDTH // 2,
-            r * settings.TILE_HEIGHT + settings.TILE_HEIGHT // 2,
+            c * tile_width + tile_width // 2,
+            r * tile_height + tile_height // 2,
         )
     else:
-        return (c * settings.TILE_WIDTH, r * settings.TILE_HEIGHT)
+        return (c * tile_width, r * tile_height)
 
 
-def world_coords_to_grid_index(x: float, y: float):
+def world_coords_to_grid_index(tile_width, tile_height, x: float, y: float):
     """Convert (x, y) coordinate on the world plane to the corresponding
     (row, col) index on the grid.
     """
@@ -87,7 +76,7 @@ def world_coords_to_grid_index(x: float, y: float):
     # consequences with how this function is used. Time will tell.
     x, y = int(x), int(y)
 
-    return (y // settings.TILE_HEIGHT, x // settings.TILE_WIDTH)
+    return (y // tile_height, x // tile_width)
 
 
 ####################

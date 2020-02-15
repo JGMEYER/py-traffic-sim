@@ -4,7 +4,7 @@ grid_width = 25  # px
 grid_height = 15  # px
 tile_width = 64  # px
 tile_height = 64  # px
-road_width = 30  # px
+road_width = 32  # px
 # Traffic
 vehicle_stop_wait_time = 0.5  # sec
 intersection_clear_time = 0.35  # sec
