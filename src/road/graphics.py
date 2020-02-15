@@ -442,10 +442,7 @@ def tile_poly(config, *, up=False, right=False, down=False, left=False):
             [
                 (tw - 1, th // 2 - (rw // 2 - 1)),
                 (tw - 1, (th // 2 + 1) + (rw // 2 - 1)),
-                (
-                    (tw // 2 + 1) + (rw // 2 - 1),
-                    (th // 2 + 1) + (rw // 2 - 1),
-                ),
+                ((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
             ]
         )
     else:
