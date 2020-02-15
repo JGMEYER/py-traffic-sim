@@ -21,13 +21,9 @@ class Traffic(Updateable):
     # Counter to track next vehicle id
     vehicle_ids = -1
 
-<<<<<<< HEAD
     def __init__(self, config, collision_grid: CollisionTileGrid):
         self.config = config
 
-=======
-    def __init__(self, collision_grid: CollisionTileGrid):
->>>>>>> Add collision checks to traffic step and print on collision (for now)
         self.vehicles = []
         self.updates = []
 
@@ -50,12 +46,7 @@ class Traffic(Updateable):
             insct.step(tick, self.vehicles)
 
         for v in self.vehicles:
-<<<<<<< HEAD
             entering_insct, segment_dir = v.step(tick, grid)
-=======
-            entering_insct, segment_dir = v.step(tick, grid,
-                                                 vehicle_stop_wait_time)
->>>>>>> Add collision checks to traffic step and print on collision (for now)
 
             v_c_obj = v.get_collision_rect()
             self.collision_grid.update_object(v._id, v_c_obj)
@@ -174,13 +165,9 @@ class Vehicle(Collidable):
     # TODO warning: for now this must be kept in sync with VehicleSprite.RADIUS
     RADIUS = 4
 
-<<<<<<< HEAD
     def __init__(self, config, id, node: RoadSegmentNode):
         self.config = config
 
-=======
-    def __init__(self, id, node: RoadSegmentNode):
->>>>>>> Add collision checks to traffic step and print on collision (for now)
         # Attributes
         self._id = id
         self.speed = (
@@ -301,10 +288,6 @@ class Vehicle(Collidable):
     def get_collision_rect(self) -> Rect:
         """Return collision box for the Vehicle as a Rect."""
         x, y = self._world_coords
-<<<<<<< HEAD
         return Rect(
             x - self.RADIUS, y - self.RADIUS, 2 * self.RADIUS, 2 * self.RADIUS
         )
-=======
-        return Rect(x-self.RADIUS, y-self.RADIUS, 2*self.RADIUS, 2*self.RADIUS)
->>>>>>> Add collision checks to traffic step and print on collision (for now)
