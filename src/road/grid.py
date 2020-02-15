@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 import networkx as nx
-from dynaconf import settings
 
 from .common import (
     Direction,
@@ -171,41 +170,42 @@ class RoadSegmentNode:
     world_coords: Tuple[int, int] = field(init=False)
 
     def __post_init__(self):
-        """Get location of `RoadSegmentNode` on world plane."""
+        """Get location of `RoadSegmentNode` on the world plane."""
+        # NOTE: We call `config` directly here. This isn't the convention we
+        # set, though there may not be other alternatives for dataclasses.
+
         r, c = self.tile_index
-        # NOTE: We call config directly here. This isn't the convention we set,
-        # though there may not be other alternatives.
         x, y = grid_index_to_world_coords(
             config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
         )
 
         if self.dir == Direction.UP:
-            y -= settings.TILE_HEIGHT // 4
+            y -= config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= settings.ROAD_WIDTH // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += settings.ROAD_WIDTH // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += settings.TILE_WIDTH // 4
+            x += config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= settings.ROAD_WIDTH // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += settings.ROAD_WIDTH // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += settings.TILE_HEIGHT // 4
+            y += config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += settings.ROAD_WIDTH // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= settings.ROAD_WIDTH // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= settings.TILE_WIDTH // 4
+            x -= config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += settings.ROAD_WIDTH // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= settings.ROAD_WIDTH // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().
