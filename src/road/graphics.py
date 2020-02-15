@@ -428,20 +428,20 @@ def tile_poly(config, *, up=False, right=False, down=False, left=False):
         points.extend(
             [
                 (tw // 2 - (rw // 2 - 1), 0),
-                ((tw // 2 + 1) + (rw // 2 - 1), 0,),
-                ((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1),),
+                ((tw // 2 + 1) + (rw // 2 - 1), 0),
+                ((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
             ]
         )
     else:
         points.extend(
-            [((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1),)]
+            [((tw // 2 + 1) + (rw // 2 - 1), th // 2 - (rw // 2 - 1))]
         )
 
     if right:
         points.extend(
             [
-                (tw - 1, th // 2 - (rw // 2 - 1),),
-                (tw - 1, (th // 2 + 1) + (rw // 2 - 1),),
+                (tw - 1, th // 2 - (rw // 2 - 1)),
+                (tw - 1, (th // 2 + 1) + (rw // 2 - 1)),
                 (
                     (tw // 2 + 1) + (rw // 2 - 1),
                     (th // 2 + 1) + (rw // 2 - 1),
@@ -450,32 +450,32 @@ def tile_poly(config, *, up=False, right=False, down=False, left=False):
         )
     else:
         points.extend(
-            [((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),)]
+            [((tw // 2 + 1) + (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
         )
 
     if down:
         points.extend(
             [
-                ((tw // 2 + 1) + (rw // 2 - 1), th - 1,),
-                (tw // 2 - (rw // 2 - 1), th - 1,),
-                (tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),),
+                ((tw // 2 + 1) + (rw // 2 - 1), th - 1),
+                (tw // 2 - (rw // 2 - 1), th - 1),
+                (tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1)),
             ]
         )
     else:
         points.extend(
-            [(tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1),)]
+            [(tw // 2 - (rw // 2 - 1), (th // 2 + 1) + (rw // 2 - 1))]
         )
 
     if left:
         points.extend(
             [
-                (0, (th // 2 + 1) + (rw // 2 - 1),),
-                (0, th // 2 - (rw // 2 - 1),),
-                (tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1),),
+                (0, (th // 2 + 1) + (rw // 2 - 1)),
+                (0, th // 2 - (rw // 2 - 1)),
+                (tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1)),
             ]
         )
     else:
-        points.extend([(tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1),)])
+        points.extend([(tw // 2 - (rw // 2 - 1), th // 2 - (rw // 2 - 1))])
 
     return points
 
