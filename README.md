@@ -15,9 +15,13 @@ A program to simulate vehicle traffic patterns using Python and pygame.
 
 $ `pipenv run pytest`
 
-## Changing settings
+## Modifying Settings
 
-You can modify game rules and debug options in `GameSettings` in `src/settings.py`
+All settings can be found in `src/settings.toml`. By default, `src/.env` is set to the `development` environment, so the game will run using the settings in `[default]` with any overrides from `[development]`.
+
+Setting values can be validated in `src/config.py`, e.g. to keep an integer value between a certain range. If adding/modifying a setting, be sure to make any necessary modifications to the setting's `Validator`, or add a new `Validator` if needed.
+
+Check out the [dynaconf](https://github.com/rochacbruno/dynaconf) repo for additional documentation.
 
 ## Gameplay basics
 
