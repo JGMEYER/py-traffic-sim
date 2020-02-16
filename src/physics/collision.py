@@ -13,7 +13,31 @@ class Collidable(ABC):
         raise NotImplementedError
 
 
-class CollisionTileGrid():
+class CollisionTracker(ABC):
+    """Interface for systems tracking collisions between objects."""
+
+    def upsert_object(self, obj_id, c_obj: Rect) -> None:
+        """Upserts a tracked collision object's location and dimensions"""
+        raise NotImplementedError
+
+    def remove_object(self, obj_id) -> None:
+        """Removes a collision object from the tracker."""
+        raise NotImplementedError
+
+    def has_collision(self, obj_id) -> bool:
+        """Returns True if the specified tracked object is colliding with
+        another tracked object.
+        """
+        raise NotImplementedError
+
+    def colliding_objects_ids(self, obj_id) -> Set[int]:
+        """Returns ids of tracked objects colliding with the specified
+        tracked object.
+        """
+        raise NotImplementedError
+
+
+class CollisionTileGrid(CollisionTracker):
     """A grid of collision objects for efficiently determining collisions
     between the objects.
     """
@@ -32,7 +56,7 @@ class CollisionTileGrid():
             for c in range(cgrid_width):
                 self.tile2objs[(r, c)] = set()
 
-    def update_object(self, obj_id, c_obj: Rect):
+    def upsert_object(self, obj_id, c_obj: Rect) -> None:
         """Updates a collision object's location and dimensions within the
         collision grid. Creates a new object with the provided obj_id if one
         does not already exist.
@@ -52,7 +76,7 @@ class CollisionTileGrid():
             self.tile2objs[(r, c)].add(obj_id)
         self.obj2tiles[obj_id] = new_tiles
 
-    def remove_object(self, obj_id):
+    def remove_object(self, obj_id) -> None:
         """Removes existing object from the collision grid."""
         tiles = self.obj2tiles[obj_id]
         for r, c in tiles:
@@ -60,7 +84,7 @@ class CollisionTileGrid():
         del self.obj2tiles[obj_id]
         del self.objs[obj_id]
 
-    def has_collision(self, obj_id):
+    def has_collision(self, obj_id) -> bool:
         """Returns True if object is colliding with another object in the grid.
         """
         c_obj = self.objs[obj_id]
@@ -72,7 +96,7 @@ class CollisionTileGrid():
 
         return False
 
-    def colliding_object_ids(self, obj_id):
+    def colliding_object_ids(self, obj_id) -> Set[int]:
         """Returns ids of objects colliding with the provided object."""
         colliding_obj_ids = set()
         c_obj = self.objs[obj_id]
@@ -103,7 +127,10 @@ class CollisionTileGrid():
         this function to the new class.
         """
         return [
-            c_obj.topleft, c_obj.topright, c_obj.bottomright, c_obj.bottomleft,
+            c_obj.topleft,
+            c_obj.topright,
+            c_obj.bottomright,
+            c_obj.bottomleft,
         ]
 
     def _get_occupied_tiles(self, c_obj: Rect):
@@ -121,8 +148,8 @@ class CollisionTileGrid():
             rows.add(r)
             cols.add(c)
 
-        for r in range(min(rows), max(rows)+1):
-            for c in range(min(cols), max(cols)+1):
+        for r in range(min(rows), max(rows) + 1):
+            for c in range(min(cols), max(cols) + 1):
                 tiles.add((r, c))
 
         return tiles
@@ -134,4 +161,4 @@ class CollisionTileGrid():
         NOTE: If this functionality needs to be reused in this module, consider
         moving it to a common.py or similar.
         """
-        return (y//self.ctg_th, x//self.ctg_tw)
+        return (y // self.ctg_th, x // self.ctg_tw)

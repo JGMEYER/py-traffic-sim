@@ -24,7 +24,9 @@ class RoadNetwork:
         # Network components
         self.grid = TileGrid(w, h)
         self.graph = TravelGraph(config)
-        self.traffic = Traffic(config, traffic_collision_grid)
+        self.traffic = Traffic(
+            config, collision_tracker=traffic_collision_grid
+        )
 
     def add_road(self, r, c, restrict_to_neighbors=True):
         """Add road node to the network

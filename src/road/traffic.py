@@ -12,7 +12,7 @@ from .common import (
 )
 from .grid import RoadSegmentNode
 from physics import pathing
-from physics.collision import Collidable, CollisionTileGrid
+from physics.collision import Collidable, CollisionTracker
 
 
 class Traffic(Updateable):
@@ -21,13 +21,13 @@ class Traffic(Updateable):
     # Counter to track next vehicle id
     vehicle_ids = -1
 
-    def __init__(self, config, collision_grid: CollisionTileGrid):
+    def __init__(self, config, collision_tracker: CollisionTracker):
         self.config = config
 
         self.vehicles = []
         self.updates = []
 
-        self.collision_grid = collision_grid
+        self.collision_tracker = collision_tracker
 
         self.inscts: Dict(Tuple(int, int), Intersection) = {}  # (r, c): insct
 
@@ -49,9 +49,9 @@ class Traffic(Updateable):
             entering_insct, segment_dir = v.step(tick, grid)
 
             v_c_obj = v.get_collision_rect()
-            self.collision_grid.update_object(v._id, v_c_obj)
+            self.collision_tracker.upsert_object(v._id, v_c_obj)
             # TODO send new form of update to show collisions graphically
-            if self.collision_grid.has_collision(v._id):
+            if self.collision_tracker.has_collision(v._id):
                 print(f"{v._id} has collision!")
 
             if entering_insct:
