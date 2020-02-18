@@ -15,7 +15,7 @@ class RoadNetwork:
 
         # Network components
         self.grid = TileGrid(w, h)
-        self.graph = TravelGraph()
+        self.graph = TravelGraph(config)
         self.traffic = Traffic(config)
 
     def add_road(self, r, c, restrict_to_neighbors=True):

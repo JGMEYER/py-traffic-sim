@@ -11,7 +11,6 @@ from .common import (
     Updateable,
     grid_index_to_world_coords,
 )
-from config import config
 
 
 #############
@@ -164,6 +163,28 @@ class RoadSegmentNode:
     UP_DOWN_LEFT tile has an UP, DOWN, and LEFT segment.
     """
 
+    # NOTE: DO NOT ACCESS THESE ATTRIBUTES!
+    #
+    # This convention is pretty horrible, but we do this for two reasons:
+    #   1. Tests break whenever we import config.py into the tested file
+    #      because settings.toml does not exist in the pytest environment. So
+    #      importing config into this module and using the settings directly in
+    #      this class is a no-go.
+    #   2. Afaict, because of how dataclass works, we cannot cleanly pass
+    #      config into road segment node without adding itself as a property of
+    #      RoadSegmentNode.
+    #
+    # So we take a compromise approach and pass these values explicitly.
+    # Unfortunately, that means they become properties of RoadSegmentNode that
+    # we will not likely maintain. Furthermore, we really don't want code using
+    # these values for the sake of code cleanliness and correctness. The config
+    # should always be the source of truth for these values.
+    grid_width: int
+    grid_height: int
+    tile_width: int
+    tile_height: int
+    road_width: int
+
     tile_index: Tuple[int, int]  # (r, c)
     dir: Direction
     node_type: RoadNodeType
@@ -171,41 +192,38 @@ class RoadSegmentNode:
 
     def __post_init__(self):
         """Get location of `RoadSegmentNode` on the world plane."""
-        # NOTE: We call `config` directly here. This isn't the convention we
-        # set, though there may not be other alternatives for dataclasses.
-
         r, c = self.tile_index
         x, y = grid_index_to_world_coords(
-            config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
+            self.tile_width, self.tile_height, r, c, center=True
         )
 
         if self.dir == Direction.UP:
-            y -= config.TILE_HEIGHT // 4
+            y -= self.tile_height // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= config.ROAD_WIDTH // 2 // 2
+                x -= self.road_width // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += config.ROAD_WIDTH // 2 // 2
+                x += self.road_width // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += config.TILE_WIDTH // 4
+            x += self.tile_width // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= config.ROAD_WIDTH // 2 // 2
+                y -= self.road_width // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += config.ROAD_WIDTH // 2 // 2
+                y += self.road_width // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += config.TILE_HEIGHT // 4
+            y += self.tile_height // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += config.ROAD_WIDTH // 2 // 2
+                x += self.road_width // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= config.ROAD_WIDTH // 2 // 2
+                x -= self.road_width // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= config.TILE_WIDTH // 4
+            x -= self.tile_width // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += config.ROAD_WIDTH // 2 // 2
+                y += self.road_width // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= config.ROAD_WIDTH // 2 // 2
+                y -= self.road_width // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().
@@ -230,7 +248,8 @@ class TravelIntersection:
         }
     """
 
-    def __init__(self, r, c, tile_type):
+    def __init__(self, config, r, c, tile_type):
+        self.config = config
         self.r = r
         self.c = c
         self.nodes = {}
@@ -245,10 +264,24 @@ class TravelIntersection:
         """Add all ENTER and EXIT nodes for a specified tile road segment"""
         self.nodes[dir] = {
             RoadNodeType.ENTER: RoadSegmentNode(
-                (self.r, self.c), dir, RoadNodeType.ENTER
+                self.config.GRID_WIDTH,
+                self.config.GRID_HEIGHT,
+                self.config.TILE_WIDTH,
+                self.config.TILE_HEIGHT,
+                self.config.ROAD_WIDTH,
+                (self.r, self.c),
+                dir,
+                RoadNodeType.ENTER,
             ),
             RoadNodeType.EXIT: RoadSegmentNode(
-                (self.r, self.c), dir, RoadNodeType.EXIT
+                self.config.GRID_WIDTH,
+                self.config.GRID_HEIGHT,
+                self.config.TILE_WIDTH,
+                self.config.TILE_HEIGHT,
+                self.config.ROAD_WIDTH,
+                (self.r, self.c),
+                dir,
+                RoadNodeType.EXIT,
             ),
         }
 
@@ -282,7 +315,8 @@ class TravelGraph(Updateable):
     intersections, i.e. no straightaways, like UP_DOWN and RIGHT_LEFT tiles.
     """
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.G = nx.DiGraph()
         self.intersections: Dict[Tuple[int, int], TravelIntersection] = {}
         self.updates = []
@@ -312,7 +346,7 @@ class TravelGraph(Updateable):
     ):
         """Add new intersection to TravelGraph"""
         # Create and intraconnect nodes for new intersection
-        insct = TravelIntersection(r, c, tile_type)
+        insct = TravelIntersection(self.config, r, c, tile_type)
         self._intraconnect_nodes(insct)
 
         # Neighbor intersections will have a new segment added to their tile to
