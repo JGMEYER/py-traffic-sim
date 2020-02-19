@@ -75,8 +75,9 @@ class Traffic(Updateable):
             x, y = v._world_coords
             updates.append((Update.MOVED, (v._id, x, y)))
 
-            collided = self.collision_tracker.has_collision(v._id)
-            updates.append((Update.STATE_CHANGED, (v._id, collided)))
+            if self.config.DEBUG.DISPLAY_VEHICLE_COLLISIONS:
+                collided = self.collision_tracker.has_collision(v._id)
+                updates.append((Update.STATE_CHANGED, (v._id, collided)))
 
         self.updates = []
         return updates
