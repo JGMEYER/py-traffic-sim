@@ -162,9 +162,6 @@ class Intersection:
 class Vehicle(Collidable):
     """A Vehicle that travels along the TravelGraph"""
 
-    # TODO warning: for now this must be kept in sync with VehicleSprite.RADIUS
-    RADIUS = 4
-
     def __init__(self, config, id, node: RoadSegmentNode):
         self.config = config
 
@@ -289,5 +286,8 @@ class Vehicle(Collidable):
         """Return collision box for the Vehicle as a Rect."""
         x, y = self._world_coords
         return Rect(
-            x - self.RADIUS, y - self.RADIUS, 2 * self.RADIUS, 2 * self.RADIUS
+            x - self.config.VEHICLE_RADIUS,
+            y - self.config.VEHICLE_RADIUS,
+            2 * self.config.VEHICLE_RADIUS,
+            2 * self.config.VEHICLE_RADIUS,
         )

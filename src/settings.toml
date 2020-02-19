@@ -11,6 +11,7 @@ intersection_clear_time = 0.35  # sec
 # Graphics
 display_travel_edges = false
 randomize_vehicle_color = false
+vehicle_radius = 4
 # Testing
 stress_test = false
 
