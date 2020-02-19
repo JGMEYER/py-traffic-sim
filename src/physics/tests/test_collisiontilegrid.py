@@ -75,7 +75,7 @@ def test_upsert_object():
 
     # Add new obj 2
     ctg.upsert_object(2, Rect((2, 2), (1, 1)))
-    _assert_objs(ctg.objs, {1: Rect((1, 1), (2, 2)), 2: Rect((2, 2), (1, 1)),})
+    _assert_objs(ctg.objs, {1: Rect((1, 1), (2, 2)), 2: Rect((2, 2), (1, 1))})
     assert ctg.obj2tiles == {
         1: {(0, 0), (0, 1), (1, 1), (1, 0)},
         2: {(1, 1)},
@@ -94,7 +94,7 @@ def test_upsert_object():
 
     # Move obj 2
     ctg.upsert_object(2, Rect((1, 1), (1, 1)))
-    _assert_objs(ctg.objs, {1: Rect((1, 1), (2, 2)), 2: Rect((1, 1), (1, 1)),})
+    _assert_objs(ctg.objs, {1: Rect((1, 1), (2, 2)), 2: Rect((1, 1), (1, 1))})
     assert ctg.obj2tiles == {
         1: {(0, 0), (0, 1), (1, 1), (1, 0)},
         2: {(0, 0), (0, 1), (1, 1), (1, 0)},
