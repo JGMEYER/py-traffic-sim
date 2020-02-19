@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from typing import Dict, List, Tuple
 
 import networkx as nx
@@ -163,67 +163,47 @@ class RoadSegmentNode:
     UP_DOWN_LEFT tile has an UP, DOWN, and LEFT segment.
     """
 
-    # NOTE: DO NOT ACCESS THESE ATTRIBUTES!
-    #
-    # This convention is pretty horrible, but we do this for two reasons:
-    #   1. Tests break whenever we import config.py into the tested file
-    #      because settings.toml does not exist in the pytest environment. So
-    #      importing config into this module and using the settings directly in
-    #      this class is a no-go.
-    #   2. Afaict, because of how dataclass works, we cannot cleanly pass
-    #      config into road segment node without adding itself as a property of
-    #      RoadSegmentNode.
-    #
-    # So we take a compromise approach and pass these values explicitly.
-    # Unfortunately, that means they become properties of RoadSegmentNode that
-    # we will not likely maintain. Furthermore, we really don't want code using
-    # these values for the sake of code cleanliness and correctness. The config
-    # should always be the source of truth for these values.
-    grid_width: int
-    grid_height: int
-    tile_width: int
-    tile_height: int
-    road_width: int
-
     tile_index: Tuple[int, int]  # (r, c)
     dir: Direction
     node_type: RoadNodeType
     world_coords: Tuple[int, int] = field(init=False)
 
-    def __post_init__(self):
+    config: InitVar[object]
+
+    def __post_init__(self, config):
         """Get location of `RoadSegmentNode` on the world plane."""
         r, c = self.tile_index
         x, y = grid_index_to_world_coords(
-            self.tile_width, self.tile_height, r, c, center=True
+            config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
         )
 
         if self.dir == Direction.UP:
-            y -= self.tile_height // 4
+            y -= config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x -= self.road_width // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x += self.road_width // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.RIGHT:
-            x += self.tile_width // 4
+            x += config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y -= self.road_width // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y += self.road_width // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.DOWN:
-            y += self.tile_height // 4
+            y += config.TILE_HEIGHT // 4
             if self.node_type == RoadNodeType.ENTER:
-                x += self.road_width // 2 // 2
+                x += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                x -= self.road_width // 2 // 2
+                x -= config.ROAD_WIDTH // 2 // 2
 
         elif self.dir == Direction.LEFT:
-            x -= self.tile_width // 4
+            x -= config.TILE_WIDTH // 4
             if self.node_type == RoadNodeType.ENTER:
-                y += self.road_width // 2 // 2
+                y += config.ROAD_WIDTH // 2 // 2
             elif self.node_type == RoadNodeType.EXIT:
-                y -= self.road_width // 2 // 2
+                y -= config.ROAD_WIDTH // 2 // 2
 
         # Hack to get around frozen=True. We don't care that we're mutating
         # an "immutable" object on __init__().
@@ -264,24 +244,10 @@ class TravelIntersection:
         """Add all ENTER and EXIT nodes for a specified tile road segment"""
         self.nodes[dir] = {
             RoadNodeType.ENTER: RoadSegmentNode(
-                self.config.GRID_WIDTH,
-                self.config.GRID_HEIGHT,
-                self.config.TILE_WIDTH,
-                self.config.TILE_HEIGHT,
-                self.config.ROAD_WIDTH,
-                (self.r, self.c),
-                dir,
-                RoadNodeType.ENTER,
+                (self.r, self.c), dir, RoadNodeType.ENTER, config=self.config,
             ),
             RoadNodeType.EXIT: RoadSegmentNode(
-                self.config.GRID_WIDTH,
-                self.config.GRID_HEIGHT,
-                self.config.TILE_WIDTH,
-                self.config.TILE_HEIGHT,
-                self.config.ROAD_WIDTH,
-                (self.r, self.c),
-                dir,
-                RoadNodeType.EXIT,
+                (self.r, self.c), dir, RoadNodeType.EXIT, config=self.config,
             ),
         }
 

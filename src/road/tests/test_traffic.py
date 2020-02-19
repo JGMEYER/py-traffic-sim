@@ -36,14 +36,7 @@ def test_intersection():
     )
 
     dummy_node = RoadSegmentNode(
-        grid_width=mocked_config.GRID_WIDTH,
-        grid_height=mocked_config.GRID_HEIGHT,
-        tile_width=mocked_config.TILE_WIDTH,
-        tile_height=mocked_config.TILE_HEIGHT,
-        road_width=mocked_config.ROAD_WIDTH,
-        tile_index=(0, 0),
-        dir=Direction.UP,
-        node_type=RoadNodeType.ENTER,
+        (0, 0), Direction.UP, RoadNodeType.ENTER, config=mocked_config
     )
 
     vehicles = [Vehicle(mocked_config, id, dummy_node) for id in range(10)]
