@@ -70,10 +70,14 @@ class Traffic(Updateable):
         """Get updates and clear updates queue"""
         updates = self.updates
 
-        # For now, always assume a Vehicle has moved
+        # For now, always update vehicles
         for v in self.vehicles:
             x, y = v._world_coords
-            updates.append((Update.MODIFIED, (v._id, x, y)))
+            updates.append((Update.MOVED, (v._id, x, y)))
+
+            if self.config.DEBUG.DISPLAY_VEHICLE_COLLISIONS:
+                collided = self.collision_tracker.has_collision(v._id)
+                updates.append((Update.STATE_CHANGED, (v._id, collided)))
 
         self.updates = []
         return updates

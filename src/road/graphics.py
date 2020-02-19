@@ -1,4 +1,5 @@
 import random
+from collections import namedtuple
 from enum import IntEnum
 from typing import Dict, Tuple
 
@@ -95,7 +96,7 @@ class RoadScreen(sprite.LayeredDirty):
                 self.tiles[(r, c)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TILES)
 
-            elif u_type == Update.MODIFIED:
+            elif u_type == Update.STATE_CHANGED:
                 self.tiles[(r, c)].update(r, c, tile_type)
 
     def _update_graph(self):
@@ -120,19 +121,28 @@ class RoadScreen(sprite.LayeredDirty):
         updates = self.network.traffic.get_updates()
 
         # Update vehicles
-        for u_type, (id, x, y) in updates:
+        for u_type, params in updates:
             if u_type == Update.ADDED:
+                id, x, y = params
                 sprite = VehicleSprite(self.config, x, y)
                 self.vehicles[id] = sprite
                 self.add(sprite, layer=RoadScreenLayers.VEHICLES)
 
-            elif u_type == Update.MODIFIED:
+            elif u_type == Update.MOVED:
+                id, x, y = params
                 self.vehicles[id].update(x, y)
+
+            elif u_type == Update.STATE_CHANGED:
+                id, collided = params
+                self.vehicles[id].set_state(collided)
 
 
 ###########
 # Sprites #
 ###########
+
+
+SpriteState = namedtuple("SpriteState", ["image", "rect"])
 
 
 class BackgroundSprite(sprite.DirtySprite):
@@ -250,51 +260,51 @@ class VehicleSprite(sprite.DirtySprite):
     def __init__(self, config, x, y):
         sprite.DirtySprite.__init__(self)
 
-        self.config = config
-
-        self.image, self.rect = self._image(
-            x, y, config.RANDOMIZE_VEHICLE_COLOR
+        self.color = (
+            random_color(150, 255)
+            if config.RANDOMIZE_VEHICLE_COLOR
+            else Color.VEHICLE_DEFAULT
         )
+        self.radius = config.VEHICLE_RADIUS
+
+        self.NORMAL_STATE = self._image(x, y, self.color, self.radius)
+        self.COLLIDED_STATE = self._image(
+            x, y, self.color, self.radius, width=2
+        )
+        self.set_state(collided=False)
 
         # Required attributes to add to LayeredDirty
         self.dirty = 1
         self.visible = 1
         self.blendmode = 0
 
-    def _image(self, x, y, randomize_color):
+    def _image(self, x, y, color, radius, width=0) -> SpriteState:
         """Create vehicle image"""
-        image = pygame.Surface(
-            [
-                self.config.VEHICLE_RADIUS * 2 + 1,
-                self.config.VEHICLE_RADIUS * 2 + 1,
-            ]
-        )
+        image = pygame.Surface([radius * 2 + 1, radius * 2 + 1])
 
-        color = (
-            random_color(150, 255)
-            if randomize_color
-            else Color.VEHICLE_DEFAULT
-        )
         pygame.draw.circle(
-            image,
-            color,
-            (self.config.VEHICLE_RADIUS, self.config.VEHICLE_RADIUS),
-            radius=self.config.VEHICLE_RADIUS,
+            image, color, (radius, radius), radius=radius, width=width,
         )
 
         rect = image.get_rect()
-        rect.x, rect.y = (
-            x - self.config.VEHICLE_RADIUS,
-            y - self.config.VEHICLE_RADIUS,
-        )
+        rect.x, rect.y = (x - radius, y - radius)
 
-        return image, rect
+        return SpriteState(image, rect)
+
+    def set_state(self, collided: bool):
+        self.image, self.rect = (
+            self.COLLIDED_STATE if collided else self.NORMAL_STATE
+        )
 
     def update(self, x, y):
         """Update vehicle location"""
-        self.rect.x, self.rect.y = (
-            x - self.config.VEHICLE_RADIUS,
-            y - self.config.VEHICLE_RADIUS,
+        self.NORMAL_STATE.rect.x, self.NORMAL_STATE.rect.y = (
+            x - self.radius,
+            y - self.radius,
+        )
+        self.COLLIDED_STATE.rect.x, self.COLLIDED_STATE.rect.y = (
+            x - self.radius,
+            y - self.radius,
         )
         self.dirty = 1
 

@@ -68,7 +68,7 @@ class TileGrid(Updateable):
 
         if new_type != old_type:
             self.grid[r][c] = new_type
-            u_type = Update.ADDED if added else Update.MODIFIED
+            u_type = Update.ADDED if added else Update.STATE_CHANGED
             self.updates.append((u_type, (r, c, new_type)))
 
     def evaluate_tile_type(self, r, c, added=False):

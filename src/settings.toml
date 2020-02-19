@@ -16,7 +16,7 @@ stress_test = false
 
     [default.debug]
     display_travel_edges = false
-
+    display_vehicle_collisions = false
 
 [development]
 # Graphics
@@ -26,5 +26,6 @@ stress_test = false
 
     [development.debug]
     display_travel_edges = true
+    display_vehicle_collisions = true
 
 [production]
