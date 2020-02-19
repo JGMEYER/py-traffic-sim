@@ -18,7 +18,6 @@ stress_test = false
     display_travel_edges = false
     display_vehicle_collisions = false
 
-
 [development]
 # Graphics
 randomize_vehicle_color = true
