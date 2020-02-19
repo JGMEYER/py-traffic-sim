@@ -62,8 +62,8 @@ def game_loop(window, clock):
 
         network.add_road(0, 0, restrict_to_neighbors=False)
         # Fill entire network grid
-        for r in range(network.gh):
-            for c in range(network.gw):
+        for r in range(network.h):
+            for c in range(network.w):
                 network.add_road(r, c, restrict_to_neighbors=True)
         # Add a bunch of vehicles
         for n in range(1000):
