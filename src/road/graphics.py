@@ -106,7 +106,7 @@ class RoadScreen(sprite.LayeredDirty):
         for u_type, (u_node, v_node) in updates:
             if u_type == Update.ADDED:
                 sprite = TravelEdgeSprite(u_node, v_node)
-                sprite.visible = self.config.DISPLAY_TRAVEL_EDGES
+                sprite.visible = self.config.DEBUG.DISPLAY_TRAVEL_EDGES
                 self.edges[(u_node, v_node)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TRAVEL_EDGES)
 
@@ -122,12 +122,7 @@ class RoadScreen(sprite.LayeredDirty):
         # Update vehicles
         for u_type, (id, x, y) in updates:
             if u_type == Update.ADDED:
-                sprite = VehicleSprite(
-                    self.config,
-                    x,
-                    y,
-                    randomize_color=self.config.RANDOMIZE_VEHICLE_COLOR,
-                )
+                sprite = VehicleSprite(self.config, x, y)
                 self.vehicles[id] = sprite
                 self.add(sprite, layer=RoadScreenLayers.VEHICLES)
 
@@ -252,12 +247,14 @@ class TravelEdgeSprite(sprite.DirtySprite):
 class VehicleSprite(sprite.DirtySprite):
     """Vehicle sprite"""
 
-    def __init__(self, config, x, y, randomize_color=False):
+    def __init__(self, config, x, y):
         sprite.DirtySprite.__init__(self)
 
         self.config = config
 
-        self.image, self.rect = self._image(x, y, randomize_color)
+        self.image, self.rect = self._image(
+            x, y, config.RANDOMIZE_VEHICLE_COLOR
+        )
 
         # Required attributes to add to LayeredDirty
         self.dirty = 1
