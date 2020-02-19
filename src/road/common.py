@@ -120,7 +120,8 @@ class Update(IntEnum):
 
     ADDED = 0
     REMOVED = 1
-    MODIFIED = 2
+    MOVED = 2
+    STATE_CHANGED = 3
 
 
 class Updateable(metaclass=ABCMeta):

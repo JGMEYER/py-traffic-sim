@@ -96,7 +96,7 @@ class RoadScreen(sprite.LayeredDirty):
                 self.tiles[(r, c)] = sprite
                 self.add(sprite, layer=RoadScreenLayers.TILES)
 
-            elif u_type == Update.MODIFIED:
+            elif u_type == Update.STATE_CHANGED:
                 self.tiles[(r, c)].update(r, c, tile_type)
 
     def _update_graph(self):
@@ -121,14 +121,20 @@ class RoadScreen(sprite.LayeredDirty):
         updates = self.network.traffic.get_updates()
 
         # Update vehicles
-        for u_type, (id, x, y) in updates:
+        for u_type, params in updates:
             if u_type == Update.ADDED:
+                id, x, y = params
                 sprite = VehicleSprite(self.config, x, y)
                 self.vehicles[id] = sprite
                 self.add(sprite, layer=RoadScreenLayers.VEHICLES)
 
-            elif u_type == Update.MODIFIED:
+            elif u_type == Update.MOVED:
+                id, x, y = params
                 self.vehicles[id].update(x, y)
+
+            elif u_type == Update.STATE_CHANGED:
+                id, collided = params
+                self.vehicles[id].set_state(collided)
 
 
 ###########
