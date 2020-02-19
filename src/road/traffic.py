@@ -50,9 +50,6 @@ class Traffic(Updateable):
 
             v_c_obj = v.get_collision_rect()
             self.collision_tracker.upsert_object(v._id, v_c_obj)
-            # TODO send new form of update to show collisions graphically
-            if self.collision_tracker.has_collision(v._id):
-                print(f"{v._id} has collision!")
 
             if entering_insct:
                 self._add_vehicle_to_insct(v, segment_dir)
