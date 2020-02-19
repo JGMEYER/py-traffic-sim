@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from typing import Dict, List, Tuple
 
 import networkx as nx
@@ -11,7 +11,6 @@ from .common import (
     Updateable,
     grid_index_to_world_coords,
 )
-from config import config
 
 
 #############
@@ -169,11 +168,10 @@ class RoadSegmentNode:
     node_type: RoadNodeType
     world_coords: Tuple[int, int] = field(init=False)
 
-    def __post_init__(self):
-        """Get location of `RoadSegmentNode` on the world plane."""
-        # NOTE: We call `config` directly here. This isn't the convention we
-        # set, though there may not be other alternatives for dataclasses.
+    config: InitVar[object]
 
+    def __post_init__(self, config):
+        """Get location of `RoadSegmentNode` on the world plane."""
         r, c = self.tile_index
         x, y = grid_index_to_world_coords(
             config.TILE_WIDTH, config.TILE_HEIGHT, r, c, center=True
@@ -230,7 +228,8 @@ class TravelIntersection:
         }
     """
 
-    def __init__(self, r, c, tile_type):
+    def __init__(self, config, r, c, tile_type):
+        self.config = config
         self.r = r
         self.c = c
         self.nodes = {}
@@ -245,10 +244,10 @@ class TravelIntersection:
         """Add all ENTER and EXIT nodes for a specified tile road segment"""
         self.nodes[dir] = {
             RoadNodeType.ENTER: RoadSegmentNode(
-                (self.r, self.c), dir, RoadNodeType.ENTER
+                (self.r, self.c), dir, RoadNodeType.ENTER, config=self.config,
             ),
             RoadNodeType.EXIT: RoadSegmentNode(
-                (self.r, self.c), dir, RoadNodeType.EXIT
+                (self.r, self.c), dir, RoadNodeType.EXIT, config=self.config,
             ),
         }
 
@@ -282,7 +281,8 @@ class TravelGraph(Updateable):
     intersections, i.e. no straightaways, like UP_DOWN and RIGHT_LEFT tiles.
     """
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.G = nx.DiGraph()
         self.intersections: Dict[Tuple[int, int], TravelIntersection] = {}
         self.updates = []
@@ -312,7 +312,7 @@ class TravelGraph(Updateable):
     ):
         """Add new intersection to TravelGraph"""
         # Create and intraconnect nodes for new intersection
-        insct = TravelIntersection(r, c, tile_type)
+        insct = TravelIntersection(self.config, r, c, tile_type)
         self._intraconnect_nodes(insct)
 
         # Neighbor intersections will have a new segment added to their tile to
