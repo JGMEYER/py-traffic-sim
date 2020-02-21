@@ -8,6 +8,7 @@ snakeviz = "*"
 pytest = "*"
 black = "*"
 pre-commit = "*"
+gprof2dot = "*"
 
 [packages]
 pygame = "==2.0.0.dev4"
@@ -15,6 +16,7 @@ networkx = "*"
 numpy = "*"
 flake8 = "*"
 dynaconf = "*"
+docopt = "*"
 
 [requires]
 python_version = "3.8"

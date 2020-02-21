@@ -9,8 +9,8 @@ A program to simulate vehicle traffic patterns using Python and pygame.
 ## Installing and running the program
 
 1. Install [pipenv](https://pipenv-fork.readthedocs.io/en/latest/basics.html).
-1. Run $`pipenv install --dev`.
-1. Run $`pipenv run pre-commit install` to configure git pre-commit hooks.
+1. Run $ `pipenv install --dev`.
+1. Run $ `pipenv run pre-commit install` to configure git pre-commit hooks.
 1. From the project directory run: $ `pipenv run python src/game.py`
 
 ## Running tests
@@ -18,6 +18,26 @@ A program to simulate vehicle traffic patterns using Python and pygame.
 $ `pipenv run pytest`
 
 You can include `-vv` for higher verbosity.
+
+## Profiling
+
+```NOTE: Check out src/profile_game.py for available cli args.```
+
+## snakeviz
+
+1. Create a profile.prof and visualize the results with snakeviz:
+
+    $ `pipenv run python src/profile_game.py && pipenv run snakeviz profiles/profile.prof`
+
+## gprof2dot
+
+1. Install graphviz. This will give you the `dot` cli tool.
+
+    $ `brew install graphviz`
+
+1. Create a profile.pstats and visualize the results with gprof2dot:
+
+    $ `pipenv run python src/profile_game.py && pipenv run gprof2dot -f pstats profiles/profile.pstats | dot -Tpng -o /tmp/prof_output.png && open /tmp/prof_output.png`
 
 ## Modifying Settings
 
