@@ -1,8 +1,6 @@
 # Project
-.DS_Store
-.vscode
 media/
-program*.prof
+profiles/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

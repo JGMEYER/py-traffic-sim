@@ -9,6 +9,7 @@ import errno
 import os
 import signal
 from functools import wraps
+from pathlib import Path
 
 from docopt import docopt
 
@@ -34,7 +35,7 @@ def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
     return decorator
 
 
-def profile_game(prof_path, runtime):
+def profile_game(runtime) -> cProfile.Profile:
     game_window, clock = game.init()
 
     @timeout(runtime)
@@ -49,13 +50,25 @@ def profile_game(prof_path, runtime):
         except Exception:
             raise
 
-    print(f"Writing results to {prof_path}.")
-    pr.dump_stats(prof_path)
+    return pr
+
+
+def output_stats(pr: cProfile.Profile, filepath):
+    print(f"Writing results to {filepath}.")
+    pr.dump_stats(filepath)
 
 
 if __name__ == "__main__":
     arguments = docopt(__doc__)
     runtime = int(arguments["--runtime"])
 
-    prof_path = os.path.join(os.getcwd(), "program.prof")
-    profile_game(prof_path, runtime)
+    output_dir = os.path.join(os.getcwd(), "profiles")
+    Path(output_dir).mkdir(exist_ok=True)
+
+    prof_path = os.path.join(output_dir, "profile.prof")
+    pstats_path = os.path.join(output_dir, "profile.pstats")
+
+    pr = profile_game(runtime)
+
+    output_stats(pr, prof_path)
+    output_stats(pr, pstats_path)

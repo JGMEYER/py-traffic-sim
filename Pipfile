@@ -8,6 +8,7 @@ snakeviz = "*"
 pytest = "*"
 black = "*"
 pre-commit = "*"
+gprof2dot = "*"
 
 [packages]
 pygame = "==2.0.0.dev4"
