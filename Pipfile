@@ -15,6 +15,7 @@ networkx = "*"
 numpy = "*"
 flake8 = "*"
 dynaconf = "*"
+docopt = "*"
 
 [requires]
 python_version = "3.8"

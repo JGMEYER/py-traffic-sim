@@ -46,7 +46,7 @@ def exit():
 ##############
 
 
-def game_loop(window, clock):
+def game_loop(window, clock, stress_test: bool):
     """Game loop"""
 
     # Create road network
@@ -57,7 +57,7 @@ def game_loop(window, clock):
     road_screen.clear(window, road_screen.bg.image)
 
     # DEMO
-    if config.STRESS_TEST:
+    if stress_test:
         import random
 
         network.add_road(0, 0, restrict_to_neighbors=False)
@@ -159,5 +159,5 @@ def display_tile_cursor(window):
 
 if __name__ == "__main__":
     game_window, clock = init()
-    game_loop(game_window, clock)
+    game_loop(game_window, clock, stress_test=config.STRESS_TEST)
     exit()
