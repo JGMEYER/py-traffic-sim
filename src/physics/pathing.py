@@ -29,18 +29,32 @@ class LinearTrajectory(Trajectory):
 
     def move(self, max_move_dist) -> (Tuple[float, float], float):
         """See parent method for desc."""
-        vector = np.array(
-            [self._end_x - self._cur_x, self._end_y - self._cur_y]
-        )
-        norm = np.linalg.norm(vector)
+        dx = self._end_x - self._cur_x
+        dy = self._end_y - self._cur_y
 
-        # Target reached
-        if max_move_dist >= norm:
-            return (self._end_x, self._end_y), max_move_dist - norm
+        # Optimization
+        if dx == 0 or dy == 0:
+            norm = max(abs(dx), abs(dy))
 
-        unit = vector / norm
-        self._cur_x, self._cur_y = tuple(
-            np.array([self._cur_x, self._cur_y])
-            + max_move_dist * np.array(unit)
-        )
-        return (self._cur_x, self._cur_y), max_move_dist
+            # Target reached
+            if max_move_dist >= norm:
+                return (self._end_x, self._end_y), max_move_dist - norm
+
+            self._cur_x += np.sign(dx) * max_move_dist
+            self._cur_y += np.sign(dy) * max_move_dist
+            return (self._cur_x, self._cur_y), max_move_dist
+
+        else:
+            vector = np.array([dx, dy])
+            norm = np.linalg.norm(vector)
+
+            # Target reached
+            if max_move_dist >= norm:
+                return (self._end_x, self._end_y), max_move_dist - norm
+
+            unit = vector / norm
+            self._cur_x, self._cur_y = tuple(
+                np.array([self._cur_x, self._cur_y])
+                + max_move_dist * np.array(unit)
+            )
+            return (self._cur_x, self._cur_y), max_move_dist
